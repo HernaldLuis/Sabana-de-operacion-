@@ -591,6 +591,28 @@ td.estado-llegada.marca-expedia.marca-vip::after{
   color: #111827;
 }
 
+  
+/* === Prioridad visual: Salida > Llegada > Ocupada === */
+/* Ocupada + Salida (sin Llegada): se ve como Salida (amarillo) */
+td.estado-ocupada.estado-salida:not(.estado-llegada),
+td.estado-salida.estado-ocupada:not(.estado-llegada){
+  background-color: var(--salida-bg) !important;
+  box-shadow: inset 0 0 0 1px var(--salida-bd) !important;
+}
+/* Ocupada + Llegada (sin Salida): se ve como Llegada (azul) */
+td.estado-ocupada.estado-llegada:not(.estado-salida),
+td.estado-llegada.estado-ocupada:not(.estado-salida){
+  background-color: var(--llegada-bg) !important;
+  box-shadow: inset 0 0 0 1px var(--llegada-bd) !important;
+}
+/* Si tiene Salida y Llegada a la vez, estrobo entre ambos. Ocultamos el icono 🛌 de Ocupada. */
+td.estado-ocupada.estado-salida::after,
+td.estado-ocupada.estado-llegada::after,
+td.estado-salida.estado-ocupada::after,
+td.estado-llegada.estado-ocupada::after{
+  content: none !important;
+}
+
   </style>
 </head>
 
