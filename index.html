@@ -457,7 +457,37 @@ td.estado-iproom::before{
 }
 
 /* Si también hay maleta (in-house) en la izquierda, corre el ✅ un poco a la derecha para que no choquen */
-</style>
+
+/* ===== Estrobo global para Salida + Llegada (sin mezclar colores) ===== */
+:root{
+  --salida-bg:#FEF3C7; /* amarillo suave */
+  --salida-bd:#F59E0B;
+  --llegada-bg:#DBEAFE; /* azul suave */
+  --llegada-bd:#3B82F6;
+}
+/* Estado base cuando tiene ambas marcas */
+td.estado-salida.estado-llegada,
+td.estado-llegada.estado-salida{
+  background-color: var(--salida-bg) !important;
+  box-shadow: inset 0 0 0 1px var(--salida-bd) !important;
+}
+/* Fase B: cuando <html> tiene la clase .strobeB, cambiamos a llegada */
+html.strobeB td.estado-salida.estado-llegada,
+html.strobeB td.estado-llegada.estado-salida{
+  background-color: var(--llegada-bg) !important;
+  box-shadow: inset 0 0 0 1px var(--llegada-bd) !important;
+}
+/* Respetar reducción de movimiento: dejamos fijo en amarillo */
+@media (prefers-reduced-motion: reduce){
+  td.estado-salida.estado-llegada,
+  td.estado-llegada.estado-salida{
+    animation: none !important;
+    background-color: var(--salida-bg) !important;
+    box-shadow: inset 0 0 0 1px var(--salida-bd) !important;
+  }
+}
+
+  </style>
 </head>
 
 <body>
@@ -2111,6 +2141,20 @@ td.estado-iproom::before{
 
     // Inicializa contador si viene vacío
     if (vIp && !vIp.textContent.trim()) vIp.textContent = '0';
+
+
+    // ===== Strobe global para celdas Salida+Llegada (sincronizado) =====
+    (function(){
+      try{
+        const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (!prefersReduced){
+          const root = document.documentElement;
+          // Asegura una fase inicial estable
+          root.classList.remove('strobeB');
+          setInterval(()=> root.classList.toggle('strobeB'), 900); // 0.9s alternado
+        }
+      }catch{}
+    })();
 
   })();
   </script>
