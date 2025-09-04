@@ -424,7 +424,40 @@ td.estado-showroom::after{
 .nps-legend{ font-size:12px; color:#374151; display:flex; gap:12px; align-items:center; }
 .nps-legend .dot{ width:10px; height:10px; border-radius:50%; background:#0EA5E9; display:inline-block; }
 
-  </style>
+  
+/* ===== Huesped en casa: maleta a la IZQUIERDA del número ===== */
+td.estado-inhouse{ position: relative; }
+td.estado-inhouse::before{
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 4px;
+  width: 16px;
+  height: 16px;
+  background-image: url('https://res.cloudinary.com/dor6za85u/image/upload/v1756963418/4bf66c0f592b61141d7632d164d83d29_f8gnqo.gif');
+  background-size: contain;
+  background-position: center left;
+  background-repeat: no-repeat;
+  pointer-events: none;
+  opacity: 0.95;
+}
+
+  
+/* ===== Estado IP Room (IZQUIERDA centrada verticalmente) ===== */
+td.estado-iproom{ position: relative; }
+td.estado-iproom::before{
+  content: "✅";
+  position: absolute;
+  left: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  line-height: 1;
+  pointer-events: none;
+}
+
+/* Si también hay maleta (in-house) en la izquierda, corre el ✅ un poco a la derecha para que no choquen */
+</style>
 </head>
 
 <body>
@@ -845,6 +878,48 @@ td.estado-showroom::after{
     </div>
   </div>
 
+  <!-- Modal de Gestión de IP Room -->
+  <div class="modal-backdrop" id="modalIpRoom" hidden>
+    <div class="modal-box modal-ocupadas" role="dialog" aria-modal="true" aria-labelledby="modalIpRoomTitle">
+      <header class="ocupadas-header" style="background:#D1FAE5; color:#065F46; border-bottom-color:#10B981;">
+        <span class="ocupadas-icon">✅</span>
+        <span id="modalIpRoomTitle">Gestionar IP Room</span>
+        <span class="ocupadas-badge" id="ipRoomBadge">(0)</span>
+      </header>
+
+      <div class="content">
+        <div class="grid-2">
+          <div>
+            <div class="mode-row">
+              <label><input type="radio" name="modeIp" value="add" checked> Agregar</label>
+              <label><input type="radio" name="modeIp" value="remove"> Quitar</label>
+            </div>
+            <textarea id="inputIpRoom" class="list-input" placeholder="Pega o escribe números de habitación (4 dígitos), separados por coma, espacio o nueva línea"></textarea>
+            <div class="helper">Ejemplos: <code>1211, 1212, 1401</code> ó en líneas separadas. Duplicados se ignoran.</div>
+            <div id="invalidMsgIp" class="helper"></div>
+          </div>
+
+          <div class="chips-panel">
+            <div class="chips-header">
+              <div class="helper"><strong>Marcadas actualmente (IP):</strong> <span id="countIpRoomInside">0</span></div>
+              <div class="chips-tools">
+                <input id="filterIpRoom" class="search" type="search" placeholder="Filtrar...">
+                <button class="btn" id="btnCopyIpRoom" title="Copiar lista">Copiar</button>
+              </div>
+            </div>
+            <div class="chips-scroll"><div class="chips" id="chipsIpRoom"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <footer>
+        <button class="btn warn" id="btnLimpiarIpRoom">Limpiar todas</button>
+        <button class="btn" id="btnCerrarIpRoom">Cerrar</button>
+        <button class="btn primary" id="btnAplicarIpRoom">Aplicar</button>
+      </footer>
+    </div>
+  </div>
+
   <script>
   (function(){
     const tz = 'America/Mazatlan';
@@ -893,11 +968,53 @@ td.estado-showroom::after{
     const btnCerrar = document.getElementById('btnCerrar');
     const btnAceptar= document.getElementById('btnAceptar');
 
+    // ===== Huesped en casa (per habitación) =====
+    const vQueue = document.getElementById('vQueue'); // indicador en barra (👥)
+    const inhouseApplied = new Set(); // habitaciones con huésped en casa
+    let currentRoom = null;           // # de habitación activa en el modal
+
+    function updateInhouseCount(){
+      if (vQueue) vQueue.textContent = String(inhouseApplied.size || 0);
+    }
+    function setRoomInhouse(num, enabled){
+      const td = roomCellMap.get(num);
+      if (enabled){
+        inhouseApplied.add(num);
+        if (td) td.classList.add('estado-inhouse');
+      } else {
+        inhouseApplied.delete(num);
+        if (td) td.classList.remove('estado-inhouse');
+      }
+      updateInhouseCount();
+    }
+
+
     function abrirModalHabitacion(num){
+
       if (titleEl)   titleEl.textContent = 'Habitación ' + num;
       if (contentEl) contentEl.textContent = 'pendientes por incorporar';
       if (modalHab)  modalHab.hidden = false;
+    
+  try{
+    currentRoom = num;
+    if (contentEl){
+      contentEl.innerHTML = `
+        <div class="row" style="display:flex;align-items:center;gap:10px;">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+            <input id="chkInhouse" type="checkbox"> <strong>Huésped en casa</strong>
+          </label>
+          <span class="helper">Activa para marcar esta habitación con maleta y sumar al contador.</span>
+        </div>
+      `;
+      const chk = contentEl.querySelector('#chkInhouse');
+      if (chk){
+        chk.checked = inhouseApplied.has(num);
+        chk.addEventListener('change', ()=> setRoomInhouse(num, chk.checked));
+      }
     }
+  }catch{}
+
+}
     function cerrarModalHabitacion(){ if (modalHab) modalHab.hidden = true; }
     if (modalHab){
       modalHab.addEventListener('click', e => { if (e.target === modalHab) cerrarModalHabitacion(); });
@@ -1873,6 +1990,127 @@ td.estado-showroom::after{
         if (npsBadge) npsBadge.textContent = '--';
       }
     })();
+
+
+    // ===== IP Room =====
+    const mIp              = document.getElementById('mIp');
+    const vIp              = document.getElementById('vIp');
+    const modalIpRoom      = document.getElementById('modalIpRoom');
+    const inputIpRoom      = document.getElementById('inputIpRoom');
+    const chipsIpRoom      = document.getElementById('chipsIpRoom');
+    const filterIpRoom     = document.getElementById('filterIpRoom');
+    const countIpRoomInside= document.getElementById('countIpRoomInside');
+    const btnCopyIpRoom    = document.getElementById('btnCopyIpRoom');
+    const btnLimpiarIpRoom = document.getElementById('btnLimpiarIpRoom');
+    const btnCerrarIpRoom  = document.getElementById('btnCerrarIpRoom');
+    const btnAplicarIpRoom = document.getElementById('btnAplicarIpRoom');
+    const ipRoomBadge      = document.getElementById('ipRoomBadge');
+
+    // Mapa de habitaciones (usa el global si existe; si no, lo construye)
+    let roomCellMapLocal = (typeof roomCellMap !== 'undefined' && roomCellMap instanceof Map) ? roomCellMap : null;
+    if (!roomCellMapLocal){
+      roomCellMapLocal = new Map();
+      document.querySelectorAll('table.excel tbody td').forEach(td => {
+        const txt = (td.textContent || '').trim();
+        if (/^\d{4}$/.test(txt)) roomCellMapLocal.set(txt, td);
+      });
+      // no sobrescribimos el global si ya existía
+    }
+
+    // Estados IP Room
+    const ipRoomApplied = new Set(); // aplicado
+    let   ipRoomEdit    = new Set(); // edición (modal)
+
+    function tokenizeIpRoom(str){
+      if (!str) return [];
+      return str.split(/[^\d]+/g).map(s=>s.trim()).filter(Boolean);
+    }
+    function toValidIpSet(arr){
+      const out = new Set();
+      for (const raw of arr){
+        const n = raw.padStart(4,'0'); // tolera 3 dígitos como 0xxx
+        if (/^\d{4}$/.test(n) && roomCellMapLocal.has(n)) out.add(n);
+      }
+      return out;
+    }
+
+    function renderChipsIpRoom(filterText=''){
+      if (!chipsIpRoom) return;
+      chipsIpRoom.innerHTML = '';
+      const f = (filterText||'').trim();
+      let invalidCount = 0;
+      const all = [...ipRoomEdit].sort((a,b)=> a.localeCompare(b));
+      for (const num of all){
+        const valid = roomCellMapLocal.has(num);
+        if (f && !num.includes(f)) continue;
+        const chip = document.createElement('span');
+        chip.className = 'chip ' + (valid ? 'occ-valid' : 'occ-invalid');
+        if (!valid) invalidCount++;
+        chip.innerHTML = `<span>${num}</span><span class="x" title="Quitar" aria-label="Quitar">×</span>`;
+        chip.querySelector('.x').addEventListener('click', ()=>{
+          ipRoomEdit.delete(num);
+          renderChipsIpRoom(filterIpRoom?.value || '');
+          if (countIpRoomInside) countIpRoomInside.textContent = String(ipRoomEdit.size);
+        });
+        chipsIpRoom.appendChild(chip);
+      }
+      if (countIpRoomInside) countIpRoomInside.textContent = String(ipRoomEdit.size) + (invalidCount?` (inválidas: ${invalidCount})`:'');
+    }
+
+    function abrirModalIpRoom(){
+      ipRoomEdit = new Set(ipRoomApplied); // clona lo aplicado
+      if (inputIpRoom) inputIpRoom.value = [...ipRoomEdit].join(', ');
+      renderChipsIpRoom();
+      if (ipRoomBadge) ipRoomBadge.textContent = `(${ipRoomApplied.size})`;
+      if (modalIpRoom) modalIpRoom.hidden = false;
+    }
+    function cerrarModalIpRoom(){ if (modalIpRoom) modalIpRoom.hidden = true; }
+
+    // Eventos del modal
+    mIp?.addEventListener('click', abrirModalIpRoom);
+    btnCerrarIpRoom?.addEventListener('click', cerrarModalIpRoom);
+    modalIpRoom?.addEventListener('click', (e)=>{ if (e.target === modalIpRoom) cerrarModalIpRoom(); });
+
+    inputIpRoom?.addEventListener('input', ()=>{
+      const tokens = tokenizeIpRoom(inputIpRoom.value);
+      ipRoomEdit = toValidIpSet(tokens);
+      renderChipsIpRoom(filterIpRoom?.value || '');
+    });
+    filterIpRoom?.addEventListener('input', ()=> renderChipsIpRoom(filterIpRoom.value || ''));
+    btnCopyIpRoom?.addEventListener('click', async ()=>{
+      try{ await navigator.clipboard.writeText([...ipRoomEdit].join(', ')); }catch{}
+    });
+    btnLimpiarIpRoom?.addEventListener('click', ()=>{
+      ipRoomEdit.clear();
+      renderChipsIpRoom(filterIpRoom?.value || '');
+      if (inputIpRoom) inputIpRoom.value='';
+    });
+
+    function aplicarIpRoomEnTabla(){
+      // Quitar estado previo
+      ipRoomApplied.forEach(num => {
+        const td = roomCellMapLocal.get(num);
+        if (td){ td.classList.remove('estado-iproom'); }
+      });
+      ipRoomApplied.clear();
+
+      // Aplicar nuevos
+      ipRoomEdit.forEach(num => {
+        const td = roomCellMapLocal.get(num);
+        if (td){
+          td.classList.add('estado-iproom'); // ✅ a la izquierda
+          ipRoomApplied.add(num);
+        }
+      });
+
+      // Actualiza contadores visuales
+      if (vIp)       vIp.textContent       = String(ipRoomApplied.size || 0);
+      if (ipRoomBadge) ipRoomBadge.textContent = `(${ipRoomApplied.size})`;
+    }
+    btnAplicarIpRoom?.addEventListener('click', aplicarIpRoomEnTabla);
+
+    // Inicializa contador si viene vacío
+    if (vIp && !vIp.textContent.trim()) vIp.textContent = '0';
 
   })();
   </script>
