@@ -488,27 +488,107 @@ html.strobeB td.estado-llegada.estado-salida{
 }
 
   
-/* === Prioridad visual: Salida > Llegada > Ocupada === */
-/* 1) Ocupada + Salida (sin Llegada): se ve como Salida (amarillo) */
-td.estado-ocupada.estado-salida:not(.estado-llegada),
-td.estado-salida.estado-ocupada:not(.estado-llegada){
-  background-color: var(--salida-bg) !important;
-  box-shadow: inset 0 0 0 1px var(--salida-bd) !important;
+/* === Llegadas Expedia: reemplaza el 🛬 por insignia 'E' (solo si .marca-expedia) === */
+td.estado-llegada.marca-expedia{ position: relative; }
+td.estado-llegada.marca-expedia::after{
+  content: "E";
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  width: 16px;
+  height: 16px;
+  border-radius: 9999px;
+  background: #fbbf24;   /* amarillo tipo Expedia */
+  color: #111827;        /* super oscuro para contraste */
+  font-weight: 900;
+  font-size: 11px;
+  line-height: 16px;
+  text-align: center;
+  pointer-events: none;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
 }
-/* 2) Ocupada + Llegada (sin Salida): se ve como Llegada (azul) */
-td.estado-ocupada.estado-llegada:not(.estado-salida),
-td.estado-llegada.estado-ocupada:not(.estado-salida){
-  background-color: var(--llegada-bg) !important;
-  box-shadow: inset 0 0 0 1px var(--llegada-bd) !important;
+
+  
+/* === Llegadas Booking: usa PNG oficial como icono === */
+td.estado-llegada.marca-booking{ position: relative; }
+td.estado-llegada.marca-booking::after{
+  content: "";
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  width: 16px;
+  height: 16px;
+  background-image: url('https://res.cloudinary.com/dor6za85u/image/upload/v1756971021/62c82305f058e2b89bce43a7_vzcrci.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  pointer-events: none;
 }
-/* 3) Si tiene Salida y Llegada a la vez, ya existe estrobo entre ambos colores.
-      En ese caso, ocultamos el icono 🛌 de Ocupada para no estorbar. */
-/* Ocultar icono de Ocupada cuando también sea Salida o Llegada */
-td.estado-ocupada.estado-salida::after,
-td.estado-ocupada.estado-llegada::after,
-td.estado-salida.estado-ocupada::after,
-td.estado-llegada.estado-ocupada::after{
-  content: none !important;
+/* Si por error una celda tiene ambas marcas, priorizamos mostrar Booking */
+td.estado-llegada.marca-expedia.marca-booking::after,
+td.estado-llegada.marca-booking.marca-expedia::after{
+  background-image: url('https://res.cloudinary.com/dor6za85u/image/upload/v1756971021/62c82305f058e2b89bce43a7_vzcrci.png');
+}
+
+  
+/* === Llegadas Booking: insignia "B" morada en la celda === */
+td.estado-llegada.marca-booking{ position: relative; }
+td.estado-llegada.marca-booking::after{
+  content: "B";
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  width: 16px;
+  height: 16px;
+  border-radius: 9999px;
+  background: #6366F1;   /* indigo (Booking) */
+  color: #ffffff;
+  font-weight: 900;
+  font-size: 11px;
+  line-height: 16px;
+  text-align: center;
+  pointer-events: none;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.08);
+}
+/* Si una celda tiene ambas marcas, forzamos que se vea la 'B' de Booking */
+td.estado-llegada.marca-expedia.marca-booking::after,
+td.estado-llegada.marca-booking.marca-expedia::after{
+  content: "B";
+  background: #6366F1;
+  color: #ffffff;
+}
+
+  
+
+/* === VIP reemplaza el avión en Llegadas (solo si .marca-vip) === */
+td.estado-llegada.marca-vip{ position: relative; }
+td.estado-llegada.marca-vip::after{
+  content: "V";
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  width: 16px;
+  height: 16px;
+  border-radius: 9999px;
+  background: #111827; /* negro */
+  color: #f59e0b;      /* dorado */
+  font-weight: 900;
+  font-size: 11px;
+  line-height: 16px;
+  text-align: center;
+  pointer-events: none;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.08);
+}
+/* Si además es Booking/Expedia, estos siguen teniendo prioridad visual */
+td.estado-llegada.marca-booking.marca-vip::after{
+  content: "B";
+  background: #6366F1;
+  color: #ffffff;
+}
+td.estado-llegada.marca-expedia.marca-vip::after{
+  content: "E";
+  background: #fbbf24;
+  color: #111827;
 }
 
   </style>
@@ -970,6 +1050,123 @@ td.estado-llegada.estado-ocupada::after{
         <button class="btn warn" id="btnLimpiarIpRoom">Limpiar todas</button>
         <button class="btn" id="btnCerrarIpRoom">Cerrar</button>
         <button class="btn primary" id="btnAplicarIpRoom">Aplicar</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Modal Llegadas Expedia -->
+  <div class="modal-backdrop" id="modalExpedia" hidden>
+    <div class="modal-box modal-ocupadas" role="dialog" aria-modal="true" aria-labelledby="modalExpediaTitle">
+      <header class="ocupadas-header" style="background:#FEF9C3;color:#7C2D12;border-bottom-color:#F59E0B;">
+        <span class="ocupadas-icon">E</span>
+        <span id="modalExpediaTitle">Llegadas (Expedia)</span>
+        <span class="ocupadas-badge" id="expediaBadge">(0)</span>
+      </header>
+
+      <div class="content">
+        <div class="grid-2">
+          <div>
+            <div class="helper"><strong>Lista Expedia</strong> (coma, espacio o saltos de línea)</div>
+            <textarea id="listExpedia" class="list-input" placeholder="1211, 1212, 1401..."></textarea>
+            <div class="chips-tools">
+              <button class="btn" id="btnPasteExpedia">Pegar</button>
+              <button class="btn" id="btnCopyExpedia">Copiar</button>
+              <button class="btn" id="btnLimpiarExpedia">Limpiar</button>
+              <span class="helper">Total: <strong id="countExpediaInside">0</strong></span>
+            </div>
+          </div>
+          <div>
+            <div class="chips-tools" style="justify-content:flex-end;">
+              <input id="filterExpedia" class="search" type="search" placeholder="Filtrar">
+            </div>
+            <div class="chips-scroll">
+              <div id="chipsExpedia"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <footer>
+        <button class="btn" id="btnCerrarExpedia">Cerrar</button>
+        <button class="btn primary" id="btnAplicarExpedia">Aplicar</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Modal Llegadas Booking -->
+  <div class="modal-backdrop" id="modalBooking" hidden>
+    <div class="modal-box modal-ocupadas" role="dialog" aria-modal="true" aria-labelledby="modalBookingTitle">
+      <header class="ocupadas-header" style="background:#EEF2FF;color:#1E1B4B;border-bottom-color:#6366F1;">
+        <span class="ocupadas-icon">B</span>
+        <span id="modalBookingTitle">Llegadas (Booking)</span>
+        <span class="ocupadas-badge" id="bookingBadge">(0)</span>
+      </header>
+
+      <div class="content">
+        <div class="grid-2">
+          <div>
+            <div class="helper"><strong>Lista Booking</strong> (coma, espacio o saltos de línea)</div>
+            <textarea id="listBooking" class="list-input" placeholder="1211, 1212, 1401..."></textarea>
+            <div class="chips-tools">
+              <button class="btn" id="btnPasteBooking">Pegar</button>
+              <button class="btn" id="btnCopyBooking">Copiar</button>
+              <button class="btn" id="btnLimpiarBooking">Limpiar</button>
+              <span class="helper">Total: <strong id="countBookingInside">0</strong></span>
+            </div>
+          </div>
+          <div>
+            <div class="chips-tools" style="justify-content:flex-end;">
+              <input id="filterBooking" class="search" type="search" placeholder="Filtrar">
+            </div>
+            <div class="chips-scroll">
+              <div id="chipsBooking"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <footer>
+        <button class="btn" id="btnCerrarBooking">Cerrar</button>
+        <button class="btn primary" id="btnAplicarBooking">Aplicar</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Modal VIPs -->
+  <div class="modal-backdrop" id="modalVips" hidden>
+    <div class="modal-box modal-ocupadas" role="dialog" aria-modal="true" aria-labelledby="modalVipsTitle">
+      <header class="ocupadas-header" style="background:#FFF7ED;color:#7C2D12;border-bottom-color:#F59E0B;">
+        <span class="ocupadas-icon">V</span>
+        <span id="modalVipsTitle">Habitaciones VIP</span>
+        <span class="ocupadas-badge" id="vipsBadge">(0)</span>
+      </header>
+
+      <div class="content">
+        <div class="grid-2">
+          <div>
+            <div class="helper"><strong>Lista VIP</strong> (coma, espacio o saltos de línea)</div>
+            <textarea id="listVips" class="list-input" placeholder="1211, 1212, 1401..."></textarea>
+            <div class="chips-tools">
+              <button class="btn" id="btnPasteVips">Pegar</button>
+              <button class="btn" id="btnCopyVips">Copiar</button>
+              <button class="btn" id="btnLimpiarVips">Limpiar</button>
+              <span class="helper">Total: <strong id="countVipsInside">0</strong></span>
+            </div>
+          </div>
+          <div>
+            <div class="chips-tools" style="justify-content:flex-end;">
+              <input id="filterVips" class="search" type="search" placeholder="Filtrar">
+            </div>
+            <div class="chips-scroll">
+              <div id="chipsVips"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <footer>
+        <button class="btn" id="btnCerrarVips">Cerrar</button>
+        <button class="btn primary" id="btnAplicarVips">Aplicar</button>
       </footer>
     </div>
   </div>
@@ -2179,6 +2376,347 @@ td.estado-llegada.estado-ocupada::after{
         }
       }catch{}
     })();
+
+
+    // === Llegadas Expedia (usa pill existente mExpedia / vExpedia) ===
+    const mExpedia            = document.getElementById('mExpedia');
+    const vExpedia            = document.getElementById('vExpedia');
+    const modalExpedia        = document.getElementById('modalExpedia');
+    const listExpedia         = document.getElementById('listExpedia');
+    const chipsExpedia        = document.getElementById('chipsExpedia');
+    const filterExpedia       = document.getElementById('filterExpedia');
+    const countExpediaInside  = document.getElementById('countExpediaInside');
+    const btnPasteExpedia     = document.getElementById('btnPasteExpedia');
+    const btnCopyExpedia      = document.getElementById('btnCopyExpedia');
+    const btnLimpiarExpedia   = document.getElementById('btnLimpiarExpedia');
+    const btnCerrarExpedia    = document.getElementById('btnCerrarExpedia');
+    const btnAplicarExpedia   = document.getElementById('btnAplicarExpedia');
+    const expediaBadge        = document.getElementById('expediaBadge');
+
+    const roomMapExp          = (typeof roomCellMap!=='undefined') ? roomCellMap : new Map();
+    const expediaApplied      = new Set(); // rooms con marca-expedia
+    let   expediaEdit         = new Set();
+
+    function tokenizeRooms(str){
+      if (!str) return [];
+      return str.split(/[^\d]+/g).map(s=>s.trim()).filter(Boolean);
+    }
+    function toValidRooms(arr){
+      const out = new Set();
+      for (const raw of arr){
+        const n = raw.replace(/^0+/, '').padStart(4,'0');
+        if (/^\d{4}$/.test(n) && roomMapExp.has(n)) out.add(n);
+      }
+      return out;
+    }
+    function renderChipsExpedia(filterText=''){
+      if (!chipsExpedia) return;
+      chipsExpedia.innerHTML='';
+      const f = (filterText||'').trim();
+      let invalid = 0;
+      for (const num of Array.from(expediaEdit).sort()){
+        const valid = roomMapExp.has(num);
+        if (f && !num.includes(f)) continue;
+        const chip = document.createElement('span');
+        chip.className = 'chip ' + (valid ? 'occ-valid' : 'occ-invalid');
+        if (!valid) invalid++;
+        chip.innerHTML = `<span>${num}</span><span class="x" title="Quitar" aria-label="Quitar">×</span>`;
+        chip.querySelector('.x').addEventListener('click', ()=>{
+          expediaEdit.delete(num);
+          renderChipsExpedia(filterExpedia?.value||'');
+          if (countExpediaInside) countExpediaInside.textContent = String(expediaEdit.size);
+        });
+        chipsExpedia.appendChild(chip);
+      }
+      if (countExpediaInside) countExpediaInside.textContent = String(expediaEdit.size) + (invalid?` (inválidas: ${invalid})`:'');
+    }
+
+    function abrirModalExpedia(){
+      expediaEdit.clear();
+      expediaApplied.forEach(n=> expediaEdit.add(n));
+      if (listExpedia) listExpedia.value = Array.from(expediaEdit).join(', ');
+      renderChipsExpedia();
+      if (expediaBadge) expediaBadge.textContent = `(${expediaApplied.size})`;
+      if (modalExpedia) modalExpedia.hidden = false;
+    }
+    function cerrarModalExpedia(){ if (modalExpedia) modalExpedia.hidden = true; }
+
+    mExpedia?.addEventListener('click', abrirModalExpedia);
+    btnCerrarExpedia?.addEventListener('click', cerrarModalExpedia);
+    modalExpedia?.addEventListener('click', (e)=>{ if (e.target===modalExpedia) cerrarModalExpedia(); });
+
+    btnPasteExpedia?.addEventListener('click', async ()=>{
+      try{
+        const t = await navigator.clipboard.readText();
+        if (listExpedia) listExpedia.value = t;
+        expediaEdit = toValidRooms(tokenizeRooms(t));
+        renderChipsExpedia(filterExpedia?.value||'');
+      }catch{}
+    });
+    btnCopyExpedia?.addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(Array.from(expediaEdit).join(', ')); }catch{} });
+    btnLimpiarExpedia?.addEventListener('click', ()=>{
+      expediaEdit.clear();
+      renderChipsExpedia(filterExpedia?.value||'');
+      if (listExpedia) listExpedia.value='';
+    });
+    filterExpedia?.addEventListener('input', ()=> renderChipsExpedia(filterExpedia.value||''));
+    listExpedia?.addEventListener('input', ()=>{
+      expediaEdit = toValidRooms(tokenizeRooms(listExpedia.value));
+      renderChipsExpedia(filterExpedia?.value||'');
+    });
+
+    function aplicarExpediaEnTabla(){
+      // Quitar marca-expedia a los anteriores (sin quitar estado-llegada)
+      expediaApplied.forEach(num=>{
+        const td = roomMapExp.get(num);
+        if (td) td.classList.remove('marca-expedia');
+      });
+      expediaApplied.clear();
+
+      // Aplicar nuevos: asegurar llegada y marcar expedia
+      expediaEdit.forEach(num=>{
+        const td = roomMapExp.get(num);
+        if (td){
+          td.classList.add('estado-llegada');
+          td.classList.add('marca-expedia');
+          expediaApplied.add(num);
+        }
+      });
+
+      if (vExpedia)     vExpedia.textContent = String(expediaApplied.size||0);
+      if (expediaBadge) expediaBadge.textContent = `(${expediaApplied.size||0})`;
+    }
+    btnAplicarExpedia?.addEventListener('click', aplicarExpediaEnTabla);
+
+    // init value
+    if (vExpedia && !vExpedia.textContent.trim()) vExpedia.textContent = '0';
+
+
+    // === Llegadas Booking (usa pill existente mBooking / vBooking) ===
+    const mBooking            = document.getElementById('mBooking');
+    const vBooking            = document.getElementById('vBooking');
+    const modalBooking        = document.getElementById('modalBooking');
+    const listBooking         = document.getElementById('listBooking');
+    const chipsBooking        = document.getElementById('chipsBooking');
+    const filterBooking       = document.getElementById('filterBooking');
+    const countBookingInside  = document.getElementById('countBookingInside');
+    const btnPasteBooking     = document.getElementById('btnPasteBooking');
+    const btnCopyBooking      = document.getElementById('btnCopyBooking');
+    const btnLimpiarBooking   = document.getElementById('btnLimpiarBooking');
+    const btnCerrarBooking    = document.getElementById('btnCerrarBooking');
+    const btnAplicarBooking   = document.getElementById('btnAplicarBooking');
+    const bookingBadge        = document.getElementById('bookingBadge');
+
+    const roomMapBk           = (typeof roomCellMap!=='undefined') ? roomCellMap : new Map();
+    const bookingApplied      = new Set(); // rooms con marca-booking
+    let   bookingEdit         = new Set();
+
+    function tokenizeRoomsBk(str){
+      if (!str) return [];
+      return str.split(/[^\d]+/g).map(s=>s.trim()).filter(Boolean);
+    }
+    function toValidRoomsBk(arr){
+      const out = new Set();
+      for (const raw of arr){
+        const n = raw.replace(/^0+/, '').padStart(4,'0');
+        if (/^\d{4}$/.test(n) && roomMapBk.has(n)) out.add(n);
+      }
+      return out;
+    }
+    function renderChipsBooking(filterText=''){
+      if (!chipsBooking) return;
+      chipsBooking.innerHTML='';
+      const f = (filterText||'').trim();
+      let invalid = 0;
+      for (const num of Array.from(bookingEdit).sort()){
+        const valid = roomMapBk.has(num);
+        if (f && !num.includes(f)) continue;
+        const chip = document.createElement('span');
+        chip.className = 'chip ' + (valid ? 'occ-valid' : 'occ-invalid');
+        if (!valid) invalid++;
+        chip.innerHTML = `<span>${num}</span><span class="x" title="Quitar" aria-label="Quitar">×</span>`;
+        chip.querySelector('.x').addEventListener('click', ()=>{
+          bookingEdit.delete(num);
+          renderChipsBooking(filterBooking?.value||'');
+          if (countBookingInside) countBookingInside.textContent = String(bookingEdit.size);
+        });
+        chipsBooking.appendChild(chip);
+      }
+      if (countBookingInside) countBookingInside.textContent = String(bookingEdit.size) + (invalid?` (inválidas: ${invalid})`:'');
+    }
+
+    function abrirModalBooking(){
+      bookingEdit.clear();
+      bookingApplied.forEach(n=> bookingEdit.add(n));
+      if (listBooking) listBooking.value = Array.from(bookingEdit).join(', ');
+      renderChipsBooking();
+      if (bookingBadge) bookingBadge.textContent = `(${bookingApplied.size})`;
+      if (modalBooking) modalBooking.hidden = false;
+    }
+    function cerrarModalBooking(){ if (modalBooking) modalBooking.hidden = true; }
+
+    mBooking?.addEventListener('click', abrirModalBooking);
+    btnCerrarBooking?.addEventListener('click', cerrarModalBooking);
+    modalBooking?.addEventListener('click', (e)=>{ if (e.target===modalBooking) cerrarModalBooking(); });
+
+    btnPasteBooking?.addEventListener('click', async ()=>{
+      try{
+        const t = await navigator.clipboard.readText();
+        if (listBooking) listBooking.value = t;
+        bookingEdit = toValidRoomsBk(tokenizeRoomsBk(t));
+        renderChipsBooking(filterBooking?.value||'');
+      }catch{}
+    });
+    btnCopyBooking?.addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(Array.from(bookingEdit).join(', ')); }catch{} });
+    btnLimpiarBooking?.addEventListener('click', ()=>{
+      bookingEdit.clear();
+      renderChipsBooking(filterBooking?.value||'');
+      if (listBooking) listBooking.value='';
+    });
+    filterBooking?.addEventListener('input', ()=> renderChipsBooking(filterBooking.value||''));
+    listBooking?.addEventListener('input', ()=>{
+      bookingEdit = toValidRoomsBk(tokenizeRoomsBk(listBooking.value));
+      renderChipsBooking(filterBooking?.value||'');
+    });
+
+    function aplicarBookingEnTabla(){
+      // Quitar marca-booking a los anteriores (sin quitar estado-llegada)
+      bookingApplied.forEach(num=>{
+        const td = roomMapBk.get(num);
+        if (td) td.classList.remove('marca-booking');
+      });
+      bookingApplied.clear();
+
+      // Aplicar nuevos: asegurar llegada y marcar booking
+      bookingEdit.forEach(num=>{
+        const td = roomMapBk.get(num);
+        if (td){
+          td.classList.add('estado-llegada');
+          td.classList.add('marca-booking');
+          bookingApplied.add(num);
+        }
+      });
+
+      if (vBooking)     vBooking.textContent = String(bookingApplied.size||0);
+      if (bookingBadge) bookingBadge.textContent = `(${bookingApplied.size||0})`;
+    }
+    btnAplicarBooking?.addEventListener('click', aplicarBookingEnTabla);
+
+    // init value
+    if (vBooking && !vBooking.textContent.trim()) vBooking.textContent = '0';
+
+
+    // === Habitaciones VIP (usa pill existente mVips / vVips) ===
+    const mVips            = document.getElementById('mVips');
+    const vVips            = document.getElementById('vVips');
+    const modalVips        = document.getElementById('modalVips');
+    const listVips         = document.getElementById('listVips');
+    const chipsVips        = document.getElementById('chipsVips');
+    const filterVips       = document.getElementById('filterVips');
+    const countVipsInside  = document.getElementById('countVipsInside');
+    const btnPasteVips     = document.getElementById('btnPasteVips');
+    const btnCopyVips      = document.getElementById('btnCopyVips');
+    const btnLimpiarVips   = document.getElementById('btnLimpiarVips');
+    const btnCerrarVips    = document.getElementById('btnCerrarVips');
+    const btnAplicarVips   = document.getElementById('btnAplicarVips');
+    const vipsBadge        = document.getElementById('vipsBadge');
+
+    const roomMapVip       = (typeof roomCellMap!=='undefined') ? roomCellMap : new Map();
+    const vipsApplied      = new Set(); // rooms con marca-vip
+    let   vipsEdit         = new Set();
+
+    function tokenizeVips(str){
+      if (!str) return [];
+      return str.split(/[^\d]+/g).map(s=>s.trim()).filter(Boolean);
+    }
+    function toValidVips(arr){
+      const out = new Set();
+      for (const raw of arr){
+        const n = raw.replace(/^0+/, '').padStart(4,'0');
+        if (/^\d{4}$/.test(n) && roomMapVip.has(n)) out.add(n);
+      }
+      return out;
+    }
+    function renderChipsVips(filterText=''){
+      if (!chipsVips) return;
+      chipsVips.innerHTML='';
+      const f = (filterText||'').trim();
+      let invalid = 0;
+      for (const num of Array.from(vipsEdit).sort()){
+        const valid = roomMapVip.has(num);
+        if (f && !num.includes(f)) continue;
+        const chip = document.createElement('span');
+        chip.className = 'chip ' + (valid ? 'occ-valid' : 'occ-invalid');
+        if (!valid) invalid++;
+        chip.innerHTML = `<span>${num}</span><span class="x" title="Quitar" aria-label="Quitar">×</span>`;
+        chip.querySelector('.x').addEventListener('click', ()=>{
+          vipsEdit.delete(num);
+          renderChipsVips(filterVips?.value||'');
+          if (countVipsInside) countVipsInside.textContent = String(vipsEdit.size);
+        });
+        chipsVips.appendChild(chip);
+      }
+      if (countVipsInside) countVipsInside.textContent = String(vipsEdit.size) + (invalid?` (inválidas: ${invalid})`:'');
+    }
+
+    function abrirModalVips(){
+      vipsEdit.clear();
+      vipsApplied.forEach(n=> vipsEdit.add(n));
+      if (listVips) listVips.value = Array.from(vipsEdit).join(', ');
+      renderChipsVips();
+      if (vipsBadge) vipsBadge.textContent = `(${vipsApplied.size})`;
+      if (modalVips) modalVips.hidden = false;
+    }
+    function cerrarModalVips(){ if (modalVips) modalVips.hidden = true; }
+
+    mVips?.addEventListener('click', abrirModalVips);
+    btnCerrarVips?.addEventListener('click', cerrarModalVips);
+    modalVips?.addEventListener('click', (e)=>{ if (e.target===modalVips) cerrarModalVips(); });
+
+    btnPasteVips?.addEventListener('click', async ()=>{
+      try{
+        const t = await navigator.clipboard.readText();
+        if (listVips) listVips.value = t;
+        vipsEdit = toValidVips(tokenizeVips(t));
+        renderChipsVips(filterVips?.value||'');
+      }catch{}
+    });
+    btnCopyVips?.addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(Array.from(vipsEdit).join(', ')); }catch{} });
+    btnLimpiarVips?.addEventListener('click', ()=>{
+      vipsEdit.clear();
+      renderChipsVips(filterVips?.value||'');
+      if (listVips) listVips.value='';
+    });
+    filterVips?.addEventListener('input', ()=> renderChipsVips(filterVips.value||''));
+    listVips?.addEventListener('input', ()=>{
+      vipsEdit = toValidVips(tokenizeVips(listVips.value));
+      renderChipsVips(filterVips?.value||'');
+    });
+
+    function aplicarVipsEnTabla(){
+      // Quitar marca-vip a los anteriores
+      vipsApplied.forEach(num=>{
+        const td = roomMapVip.get(num);
+        if (td) td.classList.remove('marca-vip');
+      });
+      vipsApplied.clear();
+
+      // Aplicar nuevos: agregar marca-vip (no cambiamos salida/llegada/ocupada)
+      vipsEdit.forEach(num=>{
+        const td = roomMapVip.get(num);
+        if (td){
+          td.classList.add('marca-vip');
+          vipsApplied.add(num);
+        }
+      });
+
+      if (vVips)     vVips.textContent = String(vipsApplied.size||0);
+      if (vipsBadge) vipsBadge.textContent = `(${vipsApplied.size||0})`;
+    }
+    btnAplicarVips?.addEventListener('click', aplicarVipsEnTabla);
+
+    // init value
+    if (vVips && !vVips.textContent.trim()) vVips.textContent = '0';
 
   })();
   </script>
