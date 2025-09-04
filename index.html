@@ -1,126 +1,472 @@
-<style>
-  
-  table.excel {
-    border-collapse: collapse;
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: 12px;
-  }
-  table.excel td {
-    border: 1px solid #cfd4dd; /* Bordes como celdas de Excel */
-    padding: 4px 6px;
-    text-align: center;
-    white-space: nowrap;
-  }
-  
-    /* Colores garantizados (sin depender de JS) */
-  td.tipo.k { color:#2563eb; font-weight:bold; } /* Azul K */
-  td.tipo.d { color:#059669; font-weight:bold; } /* Verde D */
-</style>
+<!doctype html>
+<html lang="es-MX">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sábana de Operación</title>
 
-<style>
-  /* ===== Header compacto: logo (izq) + título/fecha/hora (der) ===== */
-  .header-sabana{
-    display:flex;
-    align-items:center;
-    gap:10px;               /* espacio entre logo y texto */
-    margin:4px 0 8px;       /* compacta márgenes */
-  }
-  .header-sabana .logo{
-    height: clamp(48px, 6vw, 72px); /* tamaño compacto del logo */
-    width:auto;
-    display:block;
-  }
-
-  /* Columna de la derecha (título + líneas) */
-  .header-text{
-    display:flex;
-    flex-direction:column;
-    gap:2px;                /* título y líneas más juntitos */
-  }
-
-  /* Título cursivo profesional */
-  .page-title{
-    font-family: Georgia, "Times New Roman", Times, serif;
-    font-style: italic;
-    font-weight: 700;
-    font-size: clamp(22px, 2.4vw, 30px); /* más pequeño */
-    line-height: 1.05;                    /* compacto vertical */
-    letter-spacing: -0.01em;
-    color: #111827;
-    margin: 0;
-    text-align: left;
-  }
-
-  /* Líneas: fecha y hora */
-  .meta-line{
-    display:flex;
-    align-items:center;
-    gap:6px;                /* icono cerca del texto */
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-    font-size: 15px;        /* compacto */
-    color:#1f2937;
-  }
-  .meta-line .icon{
-    font-size:15px;
-    opacity:.8;
-  }
-  .time{
-    color:#dc2626;          /* hora en rojo */
-    font-weight:700;
-    letter-spacing:.04em;
-  }
-  
   <style>
-  /* Solo las celdas del NÚMERO: 1ª, 4ª, 7ª... de cada fila */
-  table.excel td:nth-child(3n+1){
-    padding-left: 16px;   /* ← más espacio a los lados */
-    padding-right: 16px;  /* ← ajusta a tu gusto (12–20px) */
-    min-width: 62px;      /* ← garantiza ancho sin cambiar altura */
-  }
+    [hidden]{ display:none !important; }
 
-  /* (Opcional) deja compactos K/D y el guion */
-  table.excel td:nth-child(3n+2){ min-width: 24px; }
-  table.excel td:nth-child(3n+3){ min-width: 18px; }
-</style>
+    :root{
+      --cell-inline: 8px;
+      --num-min:    46px;
+      --salida-bg:  #fef3c7;
+      --salida-bd:  #f59e0b;
+    
+      --llegada-bg: #dbeafe;
+      --llegada-bd: #2563eb;
+    
+      --ocupada-bg: #fce7f3;
+      --ocupada-bd: #ec4899;
+    
+      --fuera-bg: #FFEDD5; --fuera-bd: #F97316;
+    
+      --show-bg: #ECFCCB;
+      --show-bd: #84CC16;
+    }
 
-<style>
-  /* Números: ajuste micro */
-  table.excel td:nth-child(3n+1){
-    padding-inline: 7px !important;  /* antes 8 */
-    min-width: 44px !important;      /* antes 46/45 */
-    font-variant-numeric: tabular-nums;
-  }
-</style>
+    /* ======= Tabla estilo Excel ======= */
+    .table-scroller table.excel{
+      border-collapse: collapse !important;
+      font-family: Arial, Helvetica, sans-serif !important;
+      font-size: 12px !important;
+      width: max-content !important;
+      background:#fff;
+    }
+    .table-scroller table.excel td{
+      border: 1px solid #cfd4dd !important;
+      padding-block: 4px !important;
+      padding-inline: var(--cell-inline) !important;
+      text-align: center !important;
+      white-space: nowrap !important;
+    }
+    .table-scroller table.excel td:nth-child(3n+1){
+      padding-inline: calc(var(--cell-inline) - 1px) !important;
+      min-width: var(--num-min) !important;
+      font-variant-numeric: tabular-nums;
+      font-weight:600; color:#111827;
+    }
+    td.tipo.k{ color:#2563eb; font-weight:700; }
+    td.tipo.d{ color:#059669; font-weight:700; }
 
-</style>
+    /* Estado visual Salidas (amarillo) */
+    td.estado-salida{
+      background: var(--salida-bg) !important;
+      box-shadow: inset 0 0 0 1px var(--salida-bd);
+    }
 
-<header class="header-sabana">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-<meta charset="utf-8">
-
-  <img
-    class="logo"
-    src="https://res.cloudinary.com/dor6za85u/image/upload/v1755122245/logo_paradisus_rgb_zrms1f.png"
-    alt="Logo del hotel">
-
-  <div class="header-text">
-    <h1 class="page-title">Sábana de Operación</h1>
-
-    <div class="meta-line">
-      <span class="icon">📅</span>
-      <span id="fecha">Martes, 2 de septiembre de 2025</span>
-    </div>
-
-    <div class="meta-line">
-      <span class="icon">🕒</span>
-      <span id="hora" class="time">21:08:01</span>
-    </div>
-  </div>
-</header>
+/* Badge 🛫 for Salidas */
+td.estado-salida{
+  background: var(--salida-bg) !important;
+  box-shadow: inset 0 0 0 1px var(--salida-bd);
+  position: relative;
+}
+td.estado-salida::after{
+  content: "🛫";
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  font-size: 12px;
+  line-height: 1;
+  pointer-events: none;
+}
 
 
-<div class="table-scroller"><table class="excel">
+    /* ======= Layout general ======= */
+    .page-wrap{ width:fit-content; margin:0 auto; padding:0 8px; }
+    @supports not (width:fit-content){
+      body{ text-align:center; }
+      .page-wrap{ display:inline-block; text-align:left; }
+    }
+
+    /* ======= Header sticky ======= */
+    .header-sabana{
+      position: sticky; top: 0; z-index: 20;
+      background: #fff;
+      border-bottom: 1px solid #e5e7eb;
+      display:flex; align-items:center; gap:10px;
+      padding: 6px 0; margin: 0 0 8px;
+      flex-wrap: wrap;
+    }
+    .header-sabana .logo{ height: clamp(40px, 6vw, 72px); width:auto; display:block; }
+    .header-text{ display:flex; flex-direction:column; gap:2px; }
+    .page-title{
+      font-family: Georgia, "Times New Roman", Times, serif;
+      font-style: italic; font-weight: 700;
+      font-size: clamp(22px, 2.4vw, 30px);
+      line-height: 1.05; letter-spacing: -0.01em;
+      color:#111827; margin:0; text-align:left;
+    }
+    .meta-line{
+      display:flex; align-items:center; gap:6px;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      font-size: 15px; color:#1f2937;
+    }
+    .meta-line .icon{ font-size:15px; opacity:.8; }
+    .time{ color:#dc2626; font-weight:700; letter-spacing:.04em; }
+
+    /* ======= Botones de acciones (derecha) ======= */
+    .header-actions{ margin-left: auto; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .tool-btn{
+      appearance:none; border:1px solid #d1d5db; background:#fff; color:#111827;
+      border-radius:9999px; padding:8px 12px;
+      font:600 13px/1 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      cursor:pointer; transition: background .15s ease, border-color .15s ease, box-shadow .15s ease;
+      white-space:nowrap;
+    }
+    .tool-btn:hover{ box-shadow:0 1px 0 rgba(0,0,0,.04); }
+    .tool-btn.active{ box-shadow:0 0 0 2px rgba(17,24,39,.08) inset; }
+    .btn-salidas  { background:#fef3c7; border-color:#f59e0b; color:#92400e; }
+    .btn-llegadas { background:#dbeafe; border-color:#2563eb; color:#1e3a8a; }
+    .btn-ocupadas { background:#fce7f3; border-color:#ec4899; color:#9d174d; }
+    .btn-fuera    { background:#fee2e2; border-color:#dc2626; color:#991b1b; }
+    .btn-showroom { background:#ecfccb; border-color:#84cc16; color:#365314; }
+    .tool-btn .count{ font-weight:800; margin-left:6px; }
+
+    /* ======= Barra de métricas ======= */
+    .metrics-bar{
+      flex-basis: 100%;
+      display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+      margin-top:6px;
+    }
+    .stat-pill{
+      appearance:none; border:1px solid #d1d5db; border-radius:9999px;
+      background:#fff; color:#111827;
+      padding:8px 12px; display:flex; align-items:center; gap:8px;
+      font:600 13px/1 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      white-space:nowrap; cursor:default;
+    }
+    .stat-pill .label{ opacity:.85; }
+    .stat-pill .value{ font-weight:800; letter-spacing:.02em; }
+
+    .stat-ocupacion { background:#fff7ed; border-color:#f59e0b; color:#7c2d12; }
+    .stat-nps       { background:#e0e7ff; border-color:#6366f1; color:#3730a3; }
+    .stat-queue     { background:#cffafe; border-color:#06b6d4; color:#164e63; }
+    .stat-ip        { background:#bbf7d0; border-color:#16a34a; color:#065f46; }
+
+    .stat-expedia   { background:#fef9c3; border-color:#eab308; color:#713f12; }
+    .stat-booking   { background:#e0f2fe; border-color:#0284c7; color:#0c4a6e; }
+    .stat-vips      { background:#f3e8ff; border-color:#7c3aed; color:#4c1d95; }
+
+    .is-low  { background:#d1fae5 !important; border-color:#10b981 !important; color:#065f46 !important; }
+    .is-mid  { background:#fef3c7 !important; border-color:#f59e0b !important; color:#7c2d12 !important; }
+    .is-high { background:#fee2e2 !important; border-color:#ef4444 !important; color:#991b1b !important; }
+
+    .table-scroller{ overflow-x:auto; -webkit-overflow-scrolling:touch; background:#fafafa; padding-bottom:4px; }
+
+    @media (max-width: 600px){
+      .header-sabana .logo{ height: 36px; }
+      .page-title{ font-size: 19px; }
+      .meta-line{ font-size: 13px; }
+      .table-scroller table.excel{ font-size: 11px !important; }
+      .tool-btn{ padding:6px 10px; font-size:12px; }
+      .stat-pill{ padding:6px 10px; font-size:12px; }
+      :root{ --cell-inline: 7px; --num-min: 44px; }
+    }
+
+    /* ===== Modal genérico ===== */
+    .modal-backdrop{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+      background:rgba(0,0,0,.45); z-index:1000; padding:16px; }
+    .modal-box{ background:#fff; border-radius:12px; max-width:560px; width:100%;
+      box-shadow:0 20px 60px rgba(0,0,0,.25); overflow:hidden; }
+    .modal-box header{padding:12px 16px; border-bottom:1px solid #e5e7eb; font-weight:700}
+    .modal-box .content{padding:16px; line-height:1.5}
+    .modal-box footer{padding:12px 16px; border-top:1px solid #e5e7eb; display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap}
+    .btn{border:1px solid #e5e7eb; background:#fff; border-radius:8px; padding:8px 12px; cursor:pointer}
+    .btn.primary{background:#111827; color:#fff; border-color:#111827}
+
+    /* ===== Chips para lista actual ===== */
+    .chips{ display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+    .chip{
+      display:inline-flex; align-items:center; gap:6px;
+      padding:4px 8px; border-radius:9999px; border:1px solid #d1d5db; background:#fff;
+      font:600 12px/1 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    }
+    .chip .x{ cursor:pointer; font-weight:800; padding:2px 4px; border-radius:6px; }
+    .chip .x:hover{ background:#f3f4f6; }
+    .hint{ font-size:12px; color:#6b7280; margin-top:6px; }
+    .input-lista{ width:100%; min-height:96px; resize:vertical; padding:8px; border:1px solid #d1d5db; border-radius:8px; font:14px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
+  
+    /* === Mejora modal Salidas: panel scroll y grid === */
+    .grid-2{ display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
+    @media (max-width: 720px){ .grid-2{ grid-template-columns: 1fr; } }
+    .chips-panel{ display:flex; flex-direction:column; gap:8px; }
+    .chips-header{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+    .chips-scroll{ border:1px solid #e5e7eb; background:#fff; border-radius:8px; padding:8px;
+      max-height:260px; overflow:auto; }
+    .chips-tools{ display:flex; align-items:center; gap:8px; }
+    .search{ padding:6px 10px; border:1px solid #e5e7eb; border-radius:8px; min-width:0; }
+    .chip{ display:inline-flex; align-items:center; gap:6px; }
+    .chip .x{ font-weight:900; cursor:pointer; opacity:.6; }
+    .chip .x:hover{ opacity:1; }
+
+  
+/* ======= CHULEADO: Modal de Salidas (amarillo) ======= */
+.modal-box.modal-salidas{ border-radius:16px; overflow:hidden; animation: slideUp .18s ease-out; }
+.salidas-header{
+  display:flex; align-items:center; gap:10px;
+  background:#FEF3C7; color:#92400E; border-bottom:1px solid #F59E0B;
+  padding:12px 16px; font-weight:800; letter-spacing:.2px;
+}
+.salidas-icon{ font-size:18px; line-height:1; }
+.salidas-badge{
+  margin-left:auto; background:#F59E0B; color:#fff; font-weight:900;
+  padding:2px 8px; border-radius:9999px; font-size:12px;
+}
+.modal-backdrop{ animation: fadeIn .18s ease-out; }
+@keyframes fadeIn{ from{opacity:0} to{opacity:1} }
+@keyframes slideUp{ from{ transform: translateY(8px); } to{ transform: translateY(0); } }
+
+/* Botones temáticos */
+.modal-salidas .btn.primary{ background:#F59E0B; border-color:#F59E0B; color:#fff; }
+.modal-salidas .btn.primary:hover{ filter:brightness(0.95); }
+.modal-salidas .btn.warn{ border-color:#ef4444; color:#991b1b; }
+.modal-salidas .btn.warn:hover{ background:#fee2e2; }
+
+/* Chips válidos / inválidos */
+.chip.valid{ background:#FEF9C3; border-color:#F59E0B; }
+.chip.invalid{ background:#F3F4F6; border-color:#ef4444; color:#7f1d1d; }
+.chip.invalid::after{ content:" ❌"; font-weight:900; }
+
+  
+/* Estado visual Llegadas (azul) + badge 🛬 */
+td.estado-llegada{
+  background: var(--llegada-bg) !important;
+  box-shadow: inset 0 0 0 1px var(--llegada-bd);
+  position: relative;
+}
+td.estado-llegada::after{
+  content: "🛬";
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  font-size: 12px;
+  line-height: 1;
+  pointer-events: none;
+}
+
+  
+/* ======= CHULEADO: Modal de Llegadas (azul) ======= */
+.modal-box.modal-llegadas{ border-radius:16px; overflow:hidden; animation: slideUp .18s ease-out; }
+.llegadas-header{
+  display:flex; align-items:center; gap:10px;
+  background:#DBEAFE; color:#1E3A8A; border-bottom:1px solid #2563EB;
+  padding:12px 16px; font-weight:800; letter-spacing:.2px;
+}
+.llegadas-icon{ font-size:18px; line-height:1; }
+.llegadas-badge{
+  margin-left:auto; background:#2563EB; color:#fff; font-weight:900;
+  padding:2px 8px; border-radius:9999px; font-size:12px;
+}
+/* Chips válidos / inválidos para llegadas */
+.chip.arr-valid{ background:#E0F2FE; border-color:#2563EB; }
+.chip.arr-invalid{ background:#F3F4F6; border-color:#ef4444; color:#7f1d1d; }
+.chip.arr-invalid::after{ content:" ❌"; font-weight:900; }
+
+  
+/* Estado visual Ocupadas (rosa) + badge 🛌 */
+td.estado-ocupada{
+  background: var(--ocupada-bg) !important;
+  box-shadow: inset 0 0 0 1px var(--ocupada-bd);
+  position: relative;
+}
+td.estado-ocupada::after{
+  content: "🛌";
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  font-size: 12px;
+  line-height: 1;
+  pointer-events: none;
+}
+
+  
+/* ======= CHULEADO: Modal de Ocupadas (rosa) ======= */
+.modal-box.modal-ocupadas{ border-radius:16px; overflow:hidden; animation: slideUp .18s ease-out; }
+.ocupadas-header{
+  display:flex; align-items:center; gap:10px;
+  background:#FCE7F3; color:#9D174D; border-bottom:1px solid #EC4899;
+  padding:12px 16px; font-weight:800; letter-spacing:.2px;
+}
+.ocupadas-icon{ font-size:18px; line-height:1; }
+.ocupadas-badge{
+  margin-left:auto; background:#EC4899; color:#fff; font-weight:900;
+  padding:2px 8px; border-radius:9999px; font-size:12px;
+}
+/* Chips válidos / inválidos para ocupadas */
+.chip.occ-valid{ background:#FCE7F3; border-color:#EC4899; }
+.chip.occ-invalid{ background:#F3F4F6; border-color:#ef4444; color:#7f1d1d; }
+.chip.occ-invalid::after{ content:" ❌"; font-weight:900; }
+
+  
+/* Estado visual Fuera de Servicio (rojo/naranja) + badge 🚧 */
+td.estado-fuera{
+  background: var(--fuera-bg) !important;
+  box-shadow: inset 0 0 0 1px var(--fuera-bd);
+  position: relative;
+}
+td.estado-fuera::after{
+  content: "";
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  width: 16px;
+  height: 16px;
+  background-image: url('https://res.cloudinary.com/dor6za85u/image/upload/v1756957081/Alert_kc90qp.gif');
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  pointer-events: none;
+}
+
+  
+/* ======= CHULEADO: Modal de Fuera de Servicio (naranja/rojo) ======= */
+.modal-box.modal-fuera{ border-radius:16px; overflow:hidden; animation: slideUp .18s ease-out; }
+.fuera-header{
+  display:flex; align-items:center; gap:10px;
+  background:#FFEDD5; color:#9A3412; border-bottom:1px solid #F97316;
+  padding:12px 16px; font-weight:800; letter-spacing:.2px;
+}
+.fuera-icon{
+  width:18px; height:18px; display:inline-block;
+  background-image:url('https://res.cloudinary.com/dor6za85u/image/upload/v1756957081/Alert_kc90qp.gif');
+  background-size:contain; background-position:center; background-repeat:no-repeat;
+}
+.fuera-badge{
+  margin-left:auto; background:#EA580C; color:#fff; font-weight:900;
+  padding:2px 8px; border-radius:9999px; font-size:12px;
+}
+/* Chips válidos / inválidos para fuera de servicio */
+.chip.out-valid{ background:#FFEDD5; border-color:#F97316; }
+.chip.out-invalid{ background:#F3F4F6; border-color:#ef4444; color:#7f1d1d; }
+.chip.out-invalid::after{ content:" ❌"; font-weight:900; }
+
+  
+/* Estado visual Show Room (verde) + badge 📍 */
+td.estado-showroom{
+  background: var(--show-bg) !important;
+  box-shadow: inset 0 0 0 1px var(--show-bd);
+  position: relative;
+}
+td.estado-showroom::after{
+  content: "📍";
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  font-size: 12px;
+  line-height: 1;
+  pointer-events: none;
+}
+
+  
+/* ======= CHULEADO: Modal de Show Room (verde) ======= */
+.modal-box.modal-showroom{ border-radius:16px; overflow:hidden; animation: slideUp .18s ease-out; }
+.showroom-header{
+  display:flex; align-items:center; gap:10px;
+  background:#ECFCCB; color:#365314; border-bottom:1px solid #84CC16;
+  padding:12px 16px; font-weight:800; letter-spacing:.2px;
+}
+.showroom-icon{ font-size:18px; line-height:1; }
+.showroom-badge{
+  margin-left:auto; background:#65A30D; color:#fff; font-weight:900;
+  padding:2px 8px; border-radius:9999px; font-size:12px;
+}
+/* Chips válidos / inválidos para showroom */
+.chip.show-valid{ background:#ECFCCB; border-color:#84CC16; }
+.chip.show-invalid{ background:#F3F4F6; border-color:#ef4444; color:#7f1d1d; }
+.chip.show-invalid::after{ content:" ❌"; font-weight:900; }
+
+  
+/* === Ensanchar visualmente el área de tabla a casi pantalla completa (sin tocar alturas) === */
+.page-wrap{ width: 100% !important; }
+.table-scroller{ width: 100% !important; }
+
+  
+/* === Centrar la tabla cuando sobre espacio horizontal (sin tocar alturas) === */
+.page-wrap{ width: 100% !important; }
+.table-scroller{
+  width: 100% !important;
+  display: flex;                 /* permite centrar el contenido si hay espacio */
+  justify-content: center;
+}
+.table-scroller > table.excel{ margin: 0 auto; }
+
+  
+/* === Mejora móvil: sin tocar funcionalidad === */
+@media (max-width: 600px){
+  .modal-box{ max-width:100vw; }
+  .list-input, .search, .btn{ font-size:16px; }   /* evita zoom en iOS */
+  .chips-scroll{ max-height: 45vh; }              /* mejor uso del alto */
+  .chip .x{ padding:6px; }                        /* tap target más grande */
+  .tool-btn{ min-height:40px; }                   /* botones cómodos al tacto */
+}
+
+  </style>
+</head>
+
+<body>
+  <div class="page-wrap">
+    <header class="header-sabana">
+      <img class="logo"
+           src="https://res.cloudinary.com/dor6za85u/image/upload/v1755122245/logo_paradisus_rgb_zrms1f.png"
+           alt="Logo del hotel">
+
+      <div class="header-text">
+        <h1 class="page-title">Sábana de Operación</h1>
+        <div class="meta-line">
+          <span class="icon">📅</span>
+          <span id="fecha">—</span>
+        </div>
+        <div class="meta-line">
+          <span class="icon">🕒</span>
+          <span id="hora" class="time">—</span>
+        </div>
+      </div>
+
+      <div class="header-actions" role="toolbar" aria-label="Filtros de habitaciones">
+        <button type="button" class="tool-btn btn-salidas"  aria-pressed="false" id="btnSalidas">🛫 Salidas <span class="count" id="countSalidas">(0)</span></button>
+        <button type="button" class="tool-btn btn-llegadas" aria-pressed="false" id="btnLlegadas">🛬 Llegadas <span class="count" id="countLlegadas">(0)</span></button>
+        <button type="button" class="tool-btn btn-ocupadas" aria-pressed="false" id="btnOcupadas">🛌 Ocupadas <span class="count" id="countOcupadas">(0)</span></button>
+        <button type="button" class="tool-btn btn-fuera"    aria-pressed="false" id="btnFuera">🚧 Fuera de Servicio <span class="count" id="countFuera">(0)</span></button>
+        <button type="button" class="tool-btn btn-showroom" aria-pressed="false" id="btnShowroom">📍 Show Room <span class="count" id="countShowroom">(0)</span></button>
+      </div>
+
+      <!-- Barra de métricas -->
+      <div class="metrics-bar" role="group" aria-label="Indicadores">
+        <button type="button" class="stat-pill stat-ocupacion" id="mOcup">
+          <span>🏨</span><span class="label">Ocupación</span><span class="value" id="vOcup">--%</span>
+        </button>
+
+        <button type="button" class="stat-pill stat-nps" id="mNps">
+          <span>📊</span><span class="label">NPS</span><span class="value" id="vNps">--</span>
+        </button>
+
+        <button type="button" class="stat-pill stat-queue" id="mQueue">
+          <span>👥</span><span class="label">Huéspedes en casa</span><span class="value" id="vQueue">--</span>
+        </button>
+
+        <button type="button" class="stat-pill stat-ip" id="mIp">
+          <span>✅</span><span class="label">IP Room</span><span class="value" id="vIp">--</span>
+        </button>
+
+        <!-- Canales -->
+        <button type="button" class="stat-pill stat-expedia" id="mExpedia">
+          <span>🧳</span><span class="label">Expedia</span><span class="value" id="vExpedia">--</span>
+        </button>
+
+        <button type="button" class="stat-pill stat-booking" id="mBooking">
+          <span>🏷️</span><span class="label">Booking</span><span class="value" id="vBooking">--</span>
+        </button>
+
+        <button type="button" class="stat-pill stat-vips" id="mVips">
+          <span>👑</span><span class="label">VIPs</span><span class="value" id="vVips">--</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="table-scroller" id="scroller">
+      <table class="excel">
   <tbody>
     <tr>
       <td>1211</td><td class="tipo k">K</td><td>-</td><td>1321</td><td class="tipo d">D</td><td>-</td><td>1508</td><td class="tipo d">D</td><td>-</td><td>2208</td><td class="tipo d">D</td><td>-</td><td>2404</td><td class="tipo d">D</td><td>-</td><td>3030</td><td class="tipo k">K</td><td>-</td><td>3201</td><td class="tipo d">D</td><td>-</td><td>3302</td><td class="tipo d">D</td><td>-</td><td>4203</td><td class="tipo k">K</td><td>-</td><td>4305</td><td class="tipo d">D</td><td>-</td><td>4407</td><td class="tipo d">D</td><td>-</td><td>4509</td><td class="tipo d">D</td><td>-</td>
@@ -213,100 +559,1083 @@
       <td>1320</td><td class="tipo d">D</td><td>-</td><td>1507</td><td class="tipo k">K</td><td>-</td><td>2207</td><td class="tipo k">K</td><td>-</td><td>2403</td><td class="tipo k">K</td><td>-</td><td>3029</td><td class="tipo k">K</td><td>-</td><td>3130</td><td class="tipo k">K</td><td>-</td><td>3301</td><td class="tipo d">D</td><td>-</td><td>4202</td><td class="tipo d">D</td><td>-</td><td>4304</td><td class="tipo d">D</td><td>-</td><td>4406</td><td class="tipo k">K</td><td>-</td><td>4508</td><td class="tipo d">D</td><td>-</td>
     </tr>
   </tbody>
-</table></div>
-
-<!-- === Modal y script === -->
-<style>
-  .modal-backdrop{
-    position:fixed; inset:0; display:none; align-items:center; justify-content:center;
-    background:rgba(0,0,0,.4); z-index:1000; padding:16px;
-  }
-  .modal-box{
-    background:#fff; border-radius:12px; max-width:520px; width:100%;
-    box-shadow:0 20px 60px rgba(0,0,0,.25); overflow:hidden;
-  }
-  .modal-box header{padding:12px 16px; border-bottom:1px solid #e5e7eb; font-weight:700}
-  .modal-box .content{padding:16px; line-height:1.5}
-  .modal-box footer{padding:12px 16px; border-top:1px solid #e5e7eb; display:flex; justify-content:flex-end; gap:8px}
-  .btn{border:1px solid #e5e7eb; background:#fff; border-radius:8px; padding:8px 12px; cursor:pointer}
-  .btn.primary{background:#111827; color:#fff; border-color:#111827}
-</style>
-
-<div class="modal-backdrop" id="modalHabitacion">
-  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-    <header><span id="modalTitle">Habitación</span></header>
-    <div class="content" id="modalContent">pendientes por incorporar</div>
-    <footer>
-      <button class="btn" id="btnCerrar">Cerrar</button>
-      <button class="btn primary" id="btnAceptar">Aceptar</button>
-    </footer>
+</table>
+    </div>
   </div>
-</div>
 
-<script>
-(function(){
-  const backdrop = document.getElementById('modalHabitacion');
-  const titleEl  = document.getElementById('modalTitle');
-  const contentEl= document.getElementById('modalContent');
-  const btnCerrar= document.getElementById('btnCerrar');
-  const btnAceptar= document.getElementById('btnAceptar');
+  <!-- Modal de Habitación (informativo) -->
+  <div class="modal-backdrop" id="modalHabitacion" hidden>
+    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <header><span id="modalTitle">Habitación</span></header>
+      <div class="content" id="modalContent">pendientes por incorporar</div>
+      <footer>
+        <button class="btn" id="btnCerrar">Cerrar</button>
+        <button class="btn primary" id="btnAceptar">Aceptar</button>
+      </footer>
+    </div>
+  </div>
 
-  function abrirModal(num){
-    titleEl.textContent = 'Habitación ' + num;
-    contentEl.textContent = 'pendientes por incorporar';
-    backdrop.style.display = 'flex';
-  }
-  function cerrarModal(){ backdrop.style.display = 'none'; }
+  <!-- Modal de Gestión de Salidas -->
+  <div class="modal-backdrop" id="modalSalidas" hidden>
+    <div class="modal-box modal-salidas" role="dialog" aria-modal="true" aria-labelledby="modalSalidasTitle">
+      <header class="salidas-header"><span class="salidas-icon">🛫</span><span id="modalSalidasTitle">Gestionar Salidas</span><span class="salidas-badge" id="salidasBadge">(0)</span></header>
+      
+      <div class="content">
+        <div class="grid-2">
+          <div>
+            <div class="mode-row">
+              <label><input type="radio" name="modeSal" value="add" checked> Agregar</label>
+              <label><input type="radio" name="modeSal" value="remove"> Quitar</label>
+            </div>
+            <textarea id="inputSalidas" class="list-input" placeholder="Pega o escribe números de habitación (4 dígitos), separados por coma, espacio o nueva línea"></textarea>
+            <div class="helper">Ejemplos: <code>1211, 1212, 1401</code> ó en líneas separadas.<br>Ignoramos duplicados y validamos que existan en la tabla.</div>
+            <div id="invalidMsg" class="helper"></div>
+          </div>
+          <div class="chips-panel">
+            <div class="chips-header">
+              <div class="helper"><strong>Marcadas actualmente:</strong> <span id="countSalidasInside">0</span></div>
+              <div class="chips-tools">
+                <input id="filterSalidas" class="search" type="search" placeholder="Filtrar...">
+                <button class="btn" id="btnCopySalidas" title="Copiar lista">Copiar</button>
+              </div>
+            </div>
+            <div class="chips-scroll"><div class="chips" id="chipsSalidas"></div></div>
+          </div>
+        </div>
+      </div>
+      <footer>
+        <button class="btn warn" id="btnLimpiarSalidas">Limpiar todas</button>
+        <button class="btn" id="btnCerrarSalidas">Cerrar</button>
+        <button class="btn primary" id="btnAplicarSalidas">Aplicar</button>
+      </footer>
 
-  backdrop.addEventListener('click', (e)=>{ if(e.target === backdrop) cerrarModal(); });
-  btnCerrar.addEventListener('click', cerrarModal);
-  btnAceptar.addEventListener('click', cerrarModal);
-  document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') cerrarModal(); });
+    </div>
+  </div>
 
-  // Detectar celdas numéricas de 4 dígitos y asignar modal
-  const cells = document.querySelectorAll('table.excel td');
-  const reNum = /^\d{4}$/;
-  cells.forEach(td=>{
-    const txt = td.textContent.trim();
-    if(reNum.test(txt)){
-      td.style.cursor = 'pointer';
-      td.addEventListener('click', ()=> abrirModal(txt));
+  <!-- Modal de Gestión de Llegadas -->
+  <div class="modal-backdrop" id="modalLlegadas" hidden>
+    <div class="modal-box modal-llegadas" role="dialog" aria-modal="true" aria-labelledby="modalLlegadasTitle">
+      <header class="llegadas-header">
+        <span class="llegadas-icon">🛬</span>
+        <span id="modalLlegadasTitle">Gestionar Llegadas</span>
+        <span class="llegadas-badge" id="llegadasBadge">(0)</span>
+      </header>
+
+      <div class="content">
+        <div class="grid-2">
+          <div>
+            <div class="mode-row">
+              <label><input type="radio" name="modeArr" value="add" checked> Agregar</label>
+              <label><input type="radio" name="modeArr" value="remove"> Quitar</label>
+            </div>
+            <textarea id="inputLlegadas" class="list-input" placeholder="Pega o escribe números de habitación (4 dígitos), separados por coma, espacio, punto o guion"></textarea>
+            <div class="helper">Ejemplos: <code>1211, 1212, 1401</code> ó en líneas separadas. Duplicados se ignoran.</div>
+            <div id="invalidMsgArr" class="helper"></div>
+          </div>
+          <div class="chips-panel">
+            <div class="chips-header">
+              <div class="helper"><strong>Marcadas actualmente:</strong> <span id="countLlegadasInside">0</span></div>
+              <div class="chips-tools">
+                <input id="filterLlegadas" class="search" type="search" placeholder="Filtrar...">
+                <button class="btn" id="btnCopyLlegadas" title="Copiar lista">Copiar</button>
+              </div>
+            </div>
+            <div class="chips-scroll"><div class="chips" id="chipsLlegadas"></div></div>
+          </div>
+        </div>
+      </div>
+      <footer>
+        <button class="btn warn" id="btnLimpiarLlegadas">Limpiar todas</button>
+        <button class="btn" id="btnCerrarLlegadas">Cerrar</button>
+        <button class="btn primary" id="btnAplicarLlegadas">Aplicar</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Modal de Gestión de Ocupadas -->
+  <div class="modal-backdrop" id="modalOcupadas" hidden>
+    <div class="modal-box modal-ocupadas" role="dialog" aria-modal="true" aria-labelledby="modalOcupadasTitle">
+      <header class="ocupadas-header">
+        <span class="ocupadas-icon">🛌</span>
+        <span id="modalOcupadasTitle">Gestionar Ocupadas</span>
+        <span class="ocupadas-badge" id="ocupadasBadge">(0)</span>
+      </header>
+
+      <div class="content">
+        <div class="grid-2">
+          <div>
+            <div class="mode-row">
+              <label><input type="radio" name="modeOcc" value="add" checked> Agregar</label>
+              <label><input type="radio" name="modeOcc" value="remove"> Quitar</label>
+            </div>
+            <textarea id="inputOcupadas" class="list-input" placeholder="Pega o escribe números de habitación (4 dígitos), separados por coma, espacio, punto o guion"></textarea>
+            <div class="helper">Ejemplos: <code>1211, 1212, 1401</code> ó en líneas separadas. Duplicados se ignoran.</div>
+            <div id="invalidMsgOcc" class="helper"></div>
+          </div>
+          <div class="chips-panel">
+            <div class="chips-header">
+              <div class="helper"><strong>Marcadas actualmente:</strong> <span id="countOcupadasInside">0</span></div>
+              <div class="chips-tools">
+                <input id="filterOcupadas" class="search" type="search" placeholder="Filtrar...">
+                <button class="btn" id="btnCopyOcupadas" title="Copiar lista">Copiar</button>
+              </div>
+            </div>
+            <div class="chips-scroll"><div class="chips" id="chipsOcupadas"></div></div>
+          </div>
+        </div>
+      </div>
+      <footer>
+        <button class="btn warn" id="btnLimpiarOcupadas">Limpiar todas</button>
+        <button class="btn" id="btnCerrarOcupadas">Cerrar</button>
+        <button class="btn primary" id="btnAplicarOcupadas">Aplicar</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Modal de Gestión de Fuera de Servicio -->
+  <div class="modal-backdrop" id="modalFuera" hidden>
+    <div class="modal-box modal-fuera" role="dialog" aria-modal="true" aria-labelledby="modalFueraTitle">
+      <header class="fuera-header">
+        <span class="fuera-icon"></span>
+        <span id="modalFueraTitle">Gestionar Fuera de Servicio</span>
+        <span class="fuera-badge" id="fueraBadge">(0)</span>
+      </header>
+
+      <div class="content">
+        <div class="grid-2">
+          <div>
+            <div class="mode-row">
+              <label><input type="radio" name="modeOut" value="add" checked> Agregar</label>
+              <label><input type="radio" name="modeOut" value="remove"> Quitar</label>
+            </div>
+            <textarea id="inputFuera" class="list-input" placeholder="Pega o escribe números de habitación (4 dígitos), separados por coma, espacio, punto o guion"></textarea>
+            <div class="helper">Ejemplos: <code>1211, 1212, 1401</code> ó en líneas separadas. Duplicados se ignoran.</div>
+            <div id="invalidMsgOut" class="helper"></div>
+          </div>
+          <div class="chips-panel">
+            <div class="chips-header">
+              <div class="helper"><strong>Marcadas actualmente:</strong> <span id="countFueraInside">0</span></div>
+              <div class="chips-tools">
+                <input id="filterFuera" class="search" type="search" placeholder="Filtrar...">
+                <button class="btn" id="btnCopyFuera" title="Copiar lista">Copiar</button>
+              </div>
+            </div>
+            <div class="chips-scroll"><div class="chips" id="chipsFuera"></div></div>
+          </div>
+        </div>
+      </div>
+      <footer>
+        <button class="btn warn" id="btnLimpiarFuera">Limpiar todas</button>
+        <button class="btn" id="btnCerrarFuera">Cerrar</button>
+        <button class="btn primary" id="btnAplicarFuera">Aplicar</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Modal de Gestión de Show Room -->
+  <div class="modal-backdrop" id="modalShowroom" hidden>
+    <div class="modal-box modal-showroom" role="dialog" aria-modal="true" aria-labelledby="modalShowroomTitle">
+      <header class="showroom-header">
+        <span class="showroom-icon">📍</span>
+        <span id="modalShowroomTitle">Gestionar Show Room</span>
+        <span class="showroom-badge" id="showroomBadge">(0)</span>
+      </header>
+
+      <div class="content">
+        <div class="grid-2">
+          <div>
+            <div class="mode-row">
+              <label><input type="radio" name="modeShow" value="add" checked> Agregar</label>
+              <label><input type="radio" name="modeShow" value="remove"> Quitar</label>
+            </div>
+            <textarea id="inputShowroom" class="list-input" placeholder="Pega o escribe números de habitación (4 dígitos), separados por coma, espacio, punto o guion"></textarea>
+            <div class="helper">Ejemplos: <code>1211, 1212, 1401</code> ó en líneas separadas. Duplicados se ignoran.</div>
+            <div id="invalidMsgShow" class="helper"></div>
+          </div>
+          <div class="chips-panel">
+            <div class="chips-header">
+              <div class="helper"><strong>Marcadas actualmente:</strong> <span id="countShowroomInside">0</span></div>
+              <div class="chips-tools">
+                <input id="filterShowroom" class="search" type="search" placeholder="Filtrar...">
+                <button class="btn" id="btnCopyShowroom" title="Copiar lista">Copiar</button>
+              </div>
+            </div>
+            <div class="chips-scroll"><div class="chips" id="chipsShowroom"></div></div>
+          </div>
+        </div>
+      </div>
+      <footer>
+        <button class="btn warn" id="btnLimpiarShowroom">Limpiar todas</button>
+        <button class="btn" id="btnCerrarShowroom">Cerrar</button>
+        <button class="btn primary" id="btnAplicarShowroom">Aplicar</button>
+      </footer>
+    </div>
+  </div>
+
+  <script>
+  (function(){
+    const tz = 'America/Mazatlan';
+    const fechaEl = document.getElementById('fecha');
+    const horaEl  = document.getElementById('hora');
+
+    // Total de habitaciones del hotel
+    const TOTAL_ROOMS = 350;
+
+    function actualizarFechaHora(){
+      const now = new Date();
+      const fechaStr = new Intl.DateTimeFormat('es-MX', {
+        weekday:'long', day:'numeric', month:'long', year:'numeric', timeZone: tz
+      }).format(now);
+      if (fechaEl) fechaEl.textContent = fechaStr.charAt(0).toUpperCase() + fechaStr.slice(1);
+
+      if (horaEl) horaEl.textContent = new Intl.DateTimeFormat('es-MX', {
+        hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false, timeZone: tz
+      }).format(now);
     }
-  });
-})();
-</script>
+    actualizarFechaHora();
+    setInterval(actualizarFechaHora, 1000);
 
+    // Asegurar class="excel"
+    const firstTable = document.querySelector('.table-scroller table');
+    if (firstTable && !firstTable.classList.contains('excel')) firstTable.classList.add('excel');
 
-<script>
-(function(){
-  const tz = 'America/Mazatlan';
-  const fechaEl = document.getElementById('fecha');
-  const horaEl  = document.getElementById('hora');
-  function actualizarFechaHora(){
-    const now = new Date();
-    const fechaStr = new Intl.DateTimeFormat('es-MX', {weekday:'long',day:'numeric',month:'long',year:'numeric',timeZone:tz}).format(now);
-    if (fechaEl) fechaEl.textContent = fechaStr.charAt(0).toUpperCase() + fechaStr.slice(1);
-    if (horaEl)  horaEl.textContent  = new Intl.DateTimeFormat('es-MX', {hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false,timeZone:tz}).format(now);
-  }
-  actualizarFechaHora(); setInterval(actualizarFechaHora, 1000);
-
-  const backdrop = document.getElementById('modalHabitacion');
-  const titleEl  = document.getElementById('modalTitle');
-  const contentEl= document.getElementById('modalContent');
-  const btnCerrar= document.getElementById('btnCerrar');
-  const btnAceptar= document.getElementById('btnAceptar');
-  function abrirModal(num){ if(titleEl) titleEl.textContent='Habitación '+num; if(contentEl) contentEl.textContent='pendientes por incorporar'; if(backdrop) backdrop.style.display='flex'; }
-  function cerrarModal(){ if(backdrop) backdrop.style.display='none'; }
-  if (backdrop){
-    backdrop.addEventListener('click', e=>{ if(e.target===backdrop) cerrarModal(); });
-    if (btnCerrar) btnCerrar.addEventListener('click', cerrarModal);
-    if (btnAceptar) btnAceptar.addEventListener('click', cerrarModal);
-    document.addEventListener('keydown', e=>{ if(e.key==='Escape') cerrarModal(); });
-    const reNum=/^\d{4}$/;
-    document.querySelectorAll('table.excel td').forEach(td=>{
-      const t=td.textContent.trim();
-      if(reNum.test(t)){ td.style.cursor='pointer'; td.addEventListener('click', ()=> abrirModal(t)); }
+    // Mapa numero->celda (para pintar rápido)
+    const reNum = /^\d{4}$/;
+    const roomCellMap = new Map();
+    document.querySelectorAll('table.excel td').forEach(td => {
+      const txt = td.textContent.trim();
+      if (txt === 'K'){ td.classList.add('tipo','k'); }
+      if (txt === 'D'){ td.classList.add('tipo','d'); }
+      if (reNum.test(txt)){
+        roomCellMap.set(txt, td);
+        td.style.cursor = 'pointer';
+        td.addEventListener('click', () => abrirModalHabitacion(txt));
+      }
     });
-  }
-})();
-</script>
+
+    // Modal informativo por habitación
+    const modalHab  = document.getElementById('modalHabitacion');
+    const titleEl   = document.getElementById('modalTitle');
+    const contentEl = document.getElementById('modalContent');
+    const btnCerrar = document.getElementById('btnCerrar');
+    const btnAceptar= document.getElementById('btnAceptar');
+
+    function abrirModalHabitacion(num){
+      if (titleEl)   titleEl.textContent = 'Habitación ' + num;
+      if (contentEl) contentEl.textContent = 'pendientes por incorporar';
+      if (modalHab)  modalHab.hidden = false;
+    }
+    function cerrarModalHabitacion(){ if (modalHab) modalHab.hidden = true; }
+    if (modalHab){
+      modalHab.addEventListener('click', e => { if (e.target === modalHab) cerrarModalHabitacion(); });
+      if (btnCerrar)  btnCerrar.addEventListener('click', cerrarModalHabitacion);
+      if (btnAceptar) btnAceptar.addEventListener('click', cerrarModalHabitacion);
+      document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrarModalHabitacion(); });
+    }
+
+    
+    // ====== Gestión de SALIDAS (corrección mínima; no altera la tabla ni el modal de habitación) ======
+    const btnSalidas     = document.getElementById('btnSalidas');
+    const modalSalidas   = document.getElementById('modalSalidas');
+    const inputSalidas   = document.getElementById('inputSalidas');   // <-- coincide con HTML
+    const chipsWrap      = document.getElementById('chipsSalidas');
+    const countSalidas   = document.getElementById('countSalidas');
+
+    const btnLimpiar     = document.getElementById('btnLimpiarSalidas');
+    const btnCerrarSal   = document.getElementById('btnCerrarSalidas');
+    const btnAplicar     = document.getElementById('btnAplicarSalidas');
+
+    const countInsideEl  = document.getElementById('countSalidasInside');
+    const filterSalidas  = document.getElementById('filterSalidas');
+    const btnCopySalidas = document.getElementById('btnCopySalidas');
+
+    const salidasSet     = new Set(); // estado en edición (en el modal)
+    const salidasApplied = new Set(); // estado aplicado en la tabla
+
+    function parseLista(str){
+      if(!str) return [];
+      return str
+        .split(/[^\d]+/g)       // separa por no-dígitos (coma, espacio, saltos)
+        .map(s => s.trim())
+        .filter(Boolean)
+        .filter(s => /^\d{4}$/.test(s));
+    }
+
+    function renderChips(filterText = ''){
+      if (!chipsWrap) return;
+      chipsWrap.innerHTML = '';
+      const arr = Array.from(salidasSet).sort();
+      const f = (filterText || '').trim();
+      let validCount = 0; let invalidCount = 0;
+      for(const num of arr){
+        if (f && !num.includes(f)) continue;
+        const chip = document.createElement('span');
+        const isValid = roomCellMap.has(num);
+        chip.className = 'chip ' + (isValid ? 'valid' : 'invalid');
+        if (isValid) validCount++; else invalidCount++;
+        chip.innerHTML = `<span>${num}</span><span class="x" title="Quitar" aria-label="Quitar">×</span>`;
+        chip.querySelector('.x').addEventListener('click', ()=>{
+          salidasSet.delete(num);
+          renderChips(filterSalidas?.value || '');
+        });
+        chipsWrap.appendChild(chip);
+      }
+      if (countInsideEl) countInsideEl.textContent = String(salidasSet.size);
+    }
+
+    function abrirModalSalidas(){
+      salidasSet.clear();
+      salidasApplied.forEach(v => salidasSet.add(v));
+      renderChips();
+      if (inputSalidas) inputSalidas.value = '';
+      if (modalSalidas) modalSalidas.hidden = false;
+      setTimeout(()=>{ inputSalidas?.focus(); }, 60);
+    }
+    function cerrarModalSalidas(){ if (modalSalidas) modalSalidas.hidden = true; }
+
+    function aplicarEnTabla(){
+      salidasApplied.forEach(num => {
+        const td = roomCellMap.get(num);
+        if (td) td.classList.remove('estado-salida');
+      });
+      salidasApplied.clear();
+      salidasSet.forEach(num => {
+        const td = roomCellMap.get(num);
+        if (td) {
+          td.classList.add('estado-salida');
+          salidasApplied.add(num);
+        }
+      });
+      if (countSalidas) countSalidas.textContent = '(' + salidasApplied.size + ')';
+      const badge = document.getElementById('salidasBadge');
+      if (badge) badge.textContent = '(' + salidasApplied.size + ')';
+    
+      recalcOcupacion();
+    }
+
+    btnSalidas?.addEventListener('click', abrirModalSalidas);
+
+    btnLimpiar?.addEventListener('click', ()=>{
+      salidasSet.clear();
+      renderChips(filterSalidas?.value || '');
+    });
+
+    btnCerrarSal?.addEventListener('click', cerrarModalSalidas);
+    modalSalidas?.addEventListener('click', (e)=>{ if (e.target === modalSalidas) cerrarModalSalidas(); });
+    document.addEventListener('keydown', (e)=>{ if (e.key === 'Escape' && !modalSalidas.hidden) cerrarModalSalidas(); });
+
+    btnAplicar?.addEventListener('click', ()=>{
+      const modeEl = document.querySelector('input[name="modeSal"]:checked');
+      const mode = modeEl ? modeEl.value : 'add';
+      const arr = parseLista(inputSalidas?.value || '');
+
+      if (mode === 'add'){
+        arr.forEach(n => salidasSet.add(n));
+      } else if (mode === 'remove'){
+        arr.forEach(n => salidasSet.delete(n));
+      }
+      renderChips(filterSalidas?.value || '');
+      if (inputSalidas) inputSalidas.value = '';
+      aplicarEnTabla();
+    });
+
+    filterSalidas?.addEventListener('input', (e)=>{
+      renderChips(e.target.value || '');
+    });
+
+    btnCopySalidas?.addEventListener('click', ()=>{
+      const list = Array.from(salidasSet).sort().join(', ');
+      navigator.clipboard.writeText(list).catch(()=>{});
+    });
+
+    
+    // Atajos de teclado en el input:
+    // - Backspace con input vacío: borra el último chip
+    // - Enter / Ctrl+Enter: aplicar
+    inputSalidas?.addEventListener('keydown', (e)=>{
+      const val = inputSalidas.value.trim();
+      if ((e.key === 'Backspace' || e.key === 'Delete') && val === ''){
+        // borrar el último chip
+        const last = Array.from(salidasSet).sort().pop();
+        if (last){
+          salidasSet.delete(last);
+          renderChips(filterSalidas?.value || '');
+          e.preventDefault();
+        }
+      } else if (e.key === 'Enter'){
+        if (e.ctrlKey || !e.shiftKey){
+          e.preventDefault();
+          // Simula clic en Aplicar
+          btnAplicar?.click();
+        }
+      }
+    });
+// ====== Métricas / Canales (APIs) ======
+    window.updateOcupacion = function(pct){
+      const cont = document.getElementById('mOcup');
+      const val  = document.getElementById('vOcup');
+      if(!cont || !val) return;
+      val.textContent = pct + '%';
+      cont.classList.remove('is-low','is-mid','is-high');
+      if (pct >= 85)      cont.classList.add('is-high');
+      else if (pct >= 60) cont.classList.add('is-mid');
+      else                cont.classList.add('is-low');
+    }
+    window.updateNPS = function(nps){
+      const cont = document.getElementById('mNps');
+      const val  = document.getElementById('vNps');
+      if(!cont || !val) return;
+      val.textContent = nps;
+      cont.classList.remove('is-low','is-mid','is-high');
+      if (nps >= 50)       cont.classList.add('is-low');
+      else if (nps >= 0)   cont.classList.add('is-mid');
+      else                 cont.classList.add('is-high');
+    }
+    window.updateQueue = function(qty){
+      const val = document.getElementById('vQueue');
+      if(val) val.textContent = qty;
+    }
+    window.updateIpRoom = function(qty){
+      const val = document.getElementById('vIp');
+      if(val) val.textContent = qty;
+    }
+    window.updateExpedia = function(qty){
+      const val = document.getElementById('vExpedia');
+      if(val) val.textContent = qty;
+    }
+    window.updateBooking = function(qty){
+      const val = document.getElementById('vBooking');
+      if(val) val.textContent = qty;
+    }
+    window.updateVips = function(qty){
+      const val = document.getElementById('vVips');
+      if(val) val.textContent = qty;
+    }
+
+    // Ensanchar tabla a ~95% ancho sin tocar alturas
+    function widenToViewport(){
+      const scroller = document.getElementById('scroller');
+      const table = document.querySelector('.table-scroller table.excel');
+      if (!scroller || !table) return;
+
+      const basePx = 8, baseNum = 46;
+      document.documentElement.style.setProperty('--cell-inline', basePx + 'px');
+      document.documentElement.style.setProperty('--num-min', baseNum + 'px');
+
+      const viewportW = scroller.clientWidth;
+      const tableW = table.scrollWidth;
+      if (!viewportW || !tableW) return;
+      if (tableW >= viewportW * 0.995) return;
+
+      const factor = Math.min(2.2, Math.max(1.0, (viewportW*0.95) / tableW));
+      const newPx  = Math.round(basePx  * factor);
+      const newNum = Math.round(baseNum * factor);
+
+      document.documentElement.style.setProperty('--cell-inline', newPx + 'px');
+      document.documentElement.style.setProperty('--num-min', newNum + 'px');
+    }
+    window.addEventListener('load', widenToViewport);
+    window.addEventListener('resize', widenToViewport);
+    setTimeout(widenToViewport, 100);
+
+    // ====== Gestión de LLEGADAS (clonado de Salidas, tema azul) ======
+    const btnLlegadas     = document.getElementById('btnLlegadas');
+    const modalLlegadas   = document.getElementById('modalLlegadas');
+    const inputLlegadas   = document.getElementById('inputLlegadas');
+    const chipsLlegadas   = document.getElementById('chipsLlegadas');
+    const countLlegadas   = document.getElementById('countLlegadas');
+
+    const btnLimpiarArr   = document.getElementById('btnLimpiarLlegadas');
+    const btnCerrarArr    = document.getElementById('btnCerrarLlegadas');
+    const btnAplicarArr   = document.getElementById('btnAplicarLlegadas');
+
+    const countInsideArr  = document.getElementById('countLlegadasInside');
+    const filterLlegadas  = document.getElementById('filterLlegadas');
+    const btnCopyLlegadas = document.getElementById('btnCopyLlegadas');
+
+    const llegadasSet     = new Set(); // edición en modal
+    const llegadasApplied = new Set(); // aplicado en tabla
+
+    function parseListaArr(str){
+      if(!str) return [];
+      return str
+        .split(/[^\d]+/g)
+        .map(s => s.trim())
+        .filter(Boolean)
+        .filter(s => /^\d{4}$/.test(s));
+    }
+
+    function renderChipsLlegadas(filterText = ''){
+      if (!chipsLlegadas) return;
+      chipsLlegadas.innerHTML = '';
+      const arr = Array.from(llegadasSet).sort();
+      const f = (filterText || '').trim();
+      let validCount = 0; let invalidCount = 0;
+      for(const num of arr){
+        if (f && !num.includes(f)) continue;
+        const chip = document.createElement('span');
+        const isValid = roomCellMap.has(num);
+        chip.className = 'chip ' + (isValid ? 'arr-valid' : 'arr-invalid');
+        if (isValid) validCount++; else invalidCount++;
+        chip.innerHTML = `<span>${num}</span><span class="x" title="Quitar" aria-label="Quitar">×</span>`;
+        chip.querySelector('.x').addEventListener('click', ()=>{
+          llegadasSet.delete(num);
+          renderChipsLlegadas(filterLlegadas?.value || '');
+        });
+        chipsLlegadas.appendChild(chip);
+      }
+      if (countInsideArr) countInsideArr.textContent = String(llegadasSet.size) + (invalidCount ? ` (inválidas: ${invalidCount})` : '');
+      const badge = document.getElementById('llegadasBadge');
+      if (badge) badge.textContent = '(' + llegadasApplied.size + ')';
+    }
+
+    function abrirModalLlegadas(){
+      llegadasSet.clear();
+      llegadasApplied.forEach(v => llegadasSet.add(v));
+      renderChipsLlegadas();
+      if (inputLlegadas) inputLlegadas.value = '';
+      if (modalLlegadas) modalLlegadas.hidden = false;
+      setTimeout(()=>{ inputLlegadas?.focus(); }, 60);
+    }
+    function cerrarModalLlegadas(){ if (modalLlegadas) modalLlegadas.hidden = true; }
+
+    function aplicarLlegadasEnTabla(){
+      // quitar marcas anteriores
+      llegadasApplied.forEach(num => {
+        const td = roomCellMap.get(num);
+        if (td) td.classList.remove('estado-llegada');
+      });
+      llegadasApplied.clear();
+      // aplicar de set
+      llegadasSet.forEach(num => {
+        const td = roomCellMap.get(num);
+        if (td) {
+          td.classList.add('estado-llegada');
+          llegadasApplied.add(num);
+        }
+      });
+      if (countLlegadas) countLlegadas.textContent = '(' + llegadasApplied.size + ')';
+      const badge = document.getElementById('llegadasBadge');
+      if (badge) badge.textContent = '(' + llegadasApplied.size + ')';
+    
+      recalcOcupacion();
+    }
+
+    // Abrir modal
+    btnLlegadas?.addEventListener('click', abrirModalLlegadas);
+
+    // Limpiar todas
+    btnLimpiarArr?.addEventListener('click', ()=>{
+      llegadasSet.clear();
+      renderChipsLlegadas(filterLlegadas?.value || '');
+    });
+
+    // Cerrar modal
+    btnCerrarArr?.addEventListener('click', cerrarModalLlegadas);
+    modalLlegadas?.addEventListener('click', (e)=>{ if (e.target === modalLlegadas) cerrarModalLlegadas(); });
+    document.addEventListener('keydown', (e)=>{ if (e.key === 'Escape' && !modalLlegadas.hidden) cerrarModalLlegadas(); });
+
+    // Aplicar (no cierra)
+    btnAplicarArr?.addEventListener('click', ()=>{
+      const modeEl = document.querySelector('input[name="modeArr"]:checked');
+      const mode = modeEl ? modeEl.value : 'add';
+      const arr = parseListaArr(inputLlegadas?.value || '');
+
+      if (mode === 'add'){
+        arr.forEach(n => llegadasSet.add(n));
+      } else if (mode === 'remove'){
+        arr.forEach(n => llegadasSet.delete(n));
+      }
+      renderChipsLlegadas(filterLlegadas?.value || '');
+      if (inputLlegadas) inputLlegadas.value = '';
+      aplicarLlegadasEnTabla();
+    });
+
+    // Filtro chips
+    filterLlegadas?.addEventListener('input', (e)=>{
+      renderChipsLlegadas(e.target.value || '');
+    });
+
+    // Copiar lista
+    btnCopyLlegadas?.addEventListener('click', ()=>{
+      const list = Array.from(llegadasSet).sort().join(', ');
+      navigator.clipboard.writeText(list).catch(()=>{});
+    });
+
+    // Atajos de teclado
+    inputLlegadas?.addEventListener('keydown', (e)=>{
+      const val = inputLlegadas.value.trim();
+      if ((e.key === 'Backspace' || e.key === 'Delete') && val === ''){
+        const last = Array.from(llegadasSet).sort().pop();
+        if (last){
+          llegadasSet.delete(last);
+          renderChipsLlegadas(filterLlegadas?.value || '');
+          e.preventDefault();
+        }
+      } else if (e.key === 'Enter'){
+        if (e.ctrlKey || !e.shiftKey){
+          e.preventDefault();
+          btnAplicarArr?.click();
+        }
+      }
+    });
+
+
+    // ====== Gestión de OCUPADAS (rosa) ======
+    const btnOcupadas     = document.getElementById('btnOcupadas');
+    const modalOcupadas   = document.getElementById('modalOcupadas');
+    const inputOcupadas   = document.getElementById('inputOcupadas');
+    const chipsOcupadas   = document.getElementById('chipsOcupadas');
+    const countOcupadas   = document.getElementById('countOcupadas');
+
+    const btnLimpiarOcc   = document.getElementById('btnLimpiarOcupadas');
+    const btnCerrarOcc    = document.getElementById('btnCerrarOcupadas');
+    const btnAplicarOcc   = document.getElementById('btnAplicarOcupadas');
+
+    const countInsideOcc  = document.getElementById('countOcupadasInside');
+    const filterOcupadas  = document.getElementById('filterOcupadas');
+    const btnCopyOcupadas = document.getElementById('btnCopyOcupadas');
+
+    const ocupadasSet     = new Set(); // edición en modal
+    const ocupadasApplied = new Set(); // aplicado en tabla
+
+    function parseListaOcc(str){
+      if(!str) return [];
+      return str
+        .split(/[^\d]+/g)
+        .map(s => s.trim())
+        .filter(Boolean)
+        .filter(s => /^\d{4}$/.test(s));
+    }
+
+    function renderChipsOcupadas(filterText = ''){
+      if (!chipsOcupadas) return;
+      chipsOcupadas.innerHTML = '';
+      const arr = Array.from(ocupadasSet).sort();
+      const f = (filterText || '').trim();
+      let validCount = 0; let invalidCount = 0;
+      for(const num of arr){
+        if (f && !num.includes(f)) continue;
+        const chip = document.createElement('span');
+        const isValid = roomCellMap.has(num);
+        chip.className = 'chip ' + (isValid ? 'occ-valid' : 'occ-invalid');
+        if (isValid) validCount++; else invalidCount++;
+        chip.innerHTML = `<span>${num}</span><span class="x" title="Quitar" aria-label="Quitar">×</span>`;
+        chip.querySelector('.x').addEventListener('click', ()=>{
+          ocupadasSet.delete(num);
+          renderChipsOcupadas(filterOcupadas?.value || '');
+        });
+        chipsOcupadas.appendChild(chip);
+      }
+      if (countInsideOcc) countInsideOcc.textContent = String(ocupadasSet.size) + (invalidCount ? ` (inválidas: ${invalidCount})` : '');
+      const badge = document.getElementById('ocupadasBadge');
+      if (badge) badge.textContent = '(' + ocupadasApplied.size + ')';
+    }
+
+    function abrirModalOcupadas(){
+      ocupadasSet.clear();
+      ocupadasApplied.forEach(v => ocupadasSet.add(v));
+      renderChipsOcupadas();
+      if (inputOcupadas) inputOcupadas.value = '';
+      if (modalOcupadas) modalOcupadas.hidden = false;
+      setTimeout(()=>{ inputOcupadas?.focus(); }, 60);
+    }
+    function cerrarModalOcupadas(){ if (modalOcupadas) modalOcupadas.hidden = true; }
+
+    function aplicarOcupadasEnTabla(){
+      // quitar marcas anteriores
+      ocupadasApplied.forEach(num => {
+        const td = roomCellMap.get(num);
+        if (td) td.classList.remove('estado-ocupada');
+      });
+      ocupadasApplied.clear();
+      // aplicar de set
+      ocupadasSet.forEach(num => {
+        const td = roomCellMap.get(num);
+        if (td) {
+          td.classList.add('estado-ocupada');
+          ocupadasApplied.add(num);
+        }
+      });
+      if (countOcupadas) countOcupadas.textContent = '(' + ocupadasApplied.size + ')';
+      const badge = document.getElementById('ocupadasBadge');
+      if (badge) badge.textContent = '(' + ocupadasApplied.size + ')';
+    
+      recalcOcupacion();
+    }
+
+    // Abrir modal
+    btnOcupadas?.addEventListener('click', abrirModalOcupadas);
+
+    // Limpiar todas
+    btnLimpiarOcc?.addEventListener('click', ()=>{
+      ocupadasSet.clear();
+      renderChipsOcupadas(filterOcupadas?.value || '');
+    });
+
+    // Cerrar modal
+    btnCerrarOcc?.addEventListener('click', cerrarModalOcupadas);
+    modalOcupadas?.addEventListener('click', (e)=>{ if (e.target === modalOcupadas) cerrarModalOcupadas(); });
+    document.addEventListener('keydown', (e)=>{ if (e.key === 'Escape' && !modalOcupadas.hidden) cerrarModalOcupadas(); });
+
+    // Aplicar (no cierra)
+    btnAplicarOcc?.addEventListener('click', ()=>{
+      const modeEl = document.querySelector('input[name="modeOcc"]:checked');
+      const mode = modeEl ? modeEl.value : 'add';
+      const arr = parseListaOcc(inputOcupadas?.value || '');
+
+      if (mode === 'add'){
+        arr.forEach(n => ocupadasSet.add(n));
+      } else if (mode === 'remove'){
+        arr.forEach(n => ocupadasSet.delete(n));
+      }
+      renderChipsOcupadas(filterOcupadas?.value || '');
+      if (inputOcupadas) inputOcupadas.value = '';
+      aplicarOcupadasEnTabla();
+    });
+
+    // Filtro chips
+    filterOcupadas?.addEventListener('input', (e)=>{
+      renderChipsOcupadas(e.target.value || '');
+    });
+
+    // Copiar lista
+    btnCopyOcupadas?.addEventListener('click', ()=>{
+      const list = Array.from(ocupadasSet).sort().join(', ');
+      navigator.clipboard.writeText(list).catch(()=>{});
+    });
+
+    // Atajos de teclado
+    inputOcupadas?.addEventListener('keydown', (e)=>{
+      const val = inputOcupadas.value.trim();
+      if ((e.key === 'Backspace' || e.key === 'Delete') && val === ''){
+        const last = Array.from(ocupadasSet).sort().pop();
+        if (last){
+          ocupadasSet.delete(last);
+          renderChipsOcupadas(filterOcupadas?.value || '');
+          e.preventDefault();
+        }
+      } else if (e.key === 'Enter'){
+        if (e.ctrlKey || !e.shiftKey){
+          e.preventDefault();
+          btnAplicarOcc?.click();
+        }
+      }
+    });
+
+
+    // ====== Gestión de FUERA DE SERVICIO (naranja/rojo) ======
+    const btnFuera       = document.getElementById('btnFuera');
+    const modalFuera     = document.getElementById('modalFuera');
+    const inputFuera     = document.getElementById('inputFuera');
+    const chipsFuera     = document.getElementById('chipsFuera');
+    const countFuera     = document.getElementById('countFuera');
+
+    const btnLimpiarOut  = document.getElementById('btnLimpiarFuera');
+    const btnCerrarOut   = document.getElementById('btnCerrarFuera');
+    const btnAplicarOut  = document.getElementById('btnAplicarFuera');
+
+    const countInsideOut = document.getElementById('countFueraInside');
+    const filterFuera    = document.getElementById('filterFuera');
+    const btnCopyFuera   = document.getElementById('btnCopyFuera');
+
+    const fueraSet       = new Set(); // edición en modal
+    const fueraApplied   = new Set(); // aplicado en tabla
+
+    function parseListaOut(str){
+      if(!str) return [];
+      return str
+        .split(/[^\d]+/g)
+        .map(s => s.trim())
+        .filter(Boolean)
+        .filter(s => /^\d{4}$/.test(s));
+    }
+
+    function renderChipsFuera(filterText = ''){
+      if (!chipsFuera) return;
+      chipsFuera.innerHTML = '';
+      const arr = Array.from(fueraSet).sort();
+      const f = (filterText || '').trim();
+      let validCount = 0; let invalidCount = 0;
+      for(const num of arr){
+        if (f && !num.includes(f)) continue;
+        const chip = document.createElement('span');
+        const isValid = roomCellMap.has(num);
+        chip.className = 'chip ' + (isValid ? 'out-valid' : 'out-invalid');
+        if (isValid) validCount++; else invalidCount++;
+        chip.innerHTML = `<span>${num}</span><span class="x" title="Quitar" aria-label="Quitar">×</span>`;
+        chip.querySelector('.x').addEventListener('click', ()=>{
+          fueraSet.delete(num);
+          renderChipsFuera(filterFuera?.value || '');
+        });
+        chipsFuera.appendChild(chip);
+      }
+      if (countInsideOut) countInsideOut.textContent = String(fueraSet.size) + (invalidCount ? ` (inválidas: ${invalidCount})` : '');
+      const badge = document.getElementById('fueraBadge');
+      if (badge) badge.textContent = '(' + fueraApplied.size + ')';
+    }
+
+    function abrirModalFuera(){
+      fueraSet.clear();
+      fueraApplied.forEach(v => fueraSet.add(v));
+      renderChipsFuera();
+      if (inputFuera) inputFuera.value = '';
+      if (modalFuera) modalFuera.hidden = false;
+      setTimeout(()=>{ inputFuera?.focus(); }, 60);
+    }
+    function cerrarModalFuera(){ if (modalFuera) modalFuera.hidden = true; }
+
+    function aplicarFueraEnTabla(){
+      // quitar marcas anteriores
+      fueraApplied.forEach(num => {
+        const td = roomCellMap.get(num);
+        if (td) td.classList.remove('estado-fuera');
+      });
+      fueraApplied.clear();
+      // aplicar de set
+      fueraSet.forEach(num => {
+        const td = roomCellMap.get(num);
+        if (td) {
+          td.classList.add('estado-fuera');
+          fueraApplied.add(num);
+        }
+      });
+      if (countFuera) countFuera.textContent = '(' + fueraApplied.size + ')';
+      const badge = document.getElementById('fueraBadge');
+      if (badge) badge.textContent = '(' + fueraApplied.size + ')';
+    
+      recalcOcupacion();
+    }
+
+    // Abrir modal
+    btnFuera?.addEventListener('click', abrirModalFuera);
+
+    // Limpiar todas
+    btnLimpiarOut?.addEventListener('click', ()=>{
+      fueraSet.clear();
+      renderChipsFuera(filterFuera?.value || '');
+    });
+
+    // Cerrar modal
+    btnCerrarOut?.addEventListener('click', cerrarModalFuera);
+    modalFuera?.addEventListener('click', (e)=>{ if (e.target === modalFuera) cerrarModalFuera(); });
+    document.addEventListener('keydown', (e)=>{ if (e.key === 'Escape' && !modalFuera.hidden) cerrarModalFuera(); });
+
+    // Aplicar (no cierra)
+    btnAplicarOut?.addEventListener('click', ()=>{
+      const modeEl = document.querySelector('input[name="modeOut"]:checked');
+      const mode = modeEl ? modeEl.value : 'add';
+      const arr = parseListaOut(inputFuera?.value || '');
+
+      if (mode === 'add'){
+        arr.forEach(n => fueraSet.add(n));
+      } else if (mode === 'remove'){
+        arr.forEach(n => fueraSet.delete(n));
+      }
+      renderChipsFuera(filterFuera?.value || '');
+      if (inputFuera) inputFuera.value = '';
+      aplicarFueraEnTabla();
+    });
+
+    // Filtro chips
+    filterFuera?.addEventListener('input', (e)=>{
+      renderChipsFuera(e.target.value || '');
+    });
+
+    // Copiar lista
+    btnCopyFuera?.addEventListener('click', ()=>{
+      const list = Array.from(fueraSet).sort().join(', ');
+      navigator.clipboard.writeText(list).catch(()=>{});
+    });
+
+    // Atajos de teclado
+    inputFuera?.addEventListener('keydown', (e)=>{
+      const val = inputFuera.value.trim();
+      if ((e.key === 'Backspace' || e.key === 'Delete') && val === ''){
+        const last = Array.from(fueraSet).sort().pop();
+        if (last){
+          fueraSet.delete(last);
+          renderChipsFuera(filterFuera?.value || '');
+          e.preventDefault();
+        }
+      } else if (e.key === 'Enter'){
+        if (e.ctrlKey || !e.shiftKey){
+          e.preventDefault();
+          btnAplicarOut?.click();
+        }
+      }
+    });
+
+
+    // ====== Gestión de SHOW ROOM (verde) ======
+    const btnShowroom     = document.getElementById('btnShowroom');
+    const modalShowroom   = document.getElementById('modalShowroom');
+    const inputShowroom   = document.getElementById('inputShowroom');
+    const chipsShowroom   = document.getElementById('chipsShowroom');
+    const countShowroom   = document.getElementById('countShowroom');
+
+    const btnLimpiarShow  = document.getElementById('btnLimpiarShowroom');
+    const btnCerrarShow   = document.getElementById('btnCerrarShowroom');
+    const btnAplicarShow  = document.getElementById('btnAplicarShowroom');
+
+    const countInsideShow = document.getElementById('countShowroomInside');
+    const filterShowroom  = document.getElementById('filterShowroom');
+    const btnCopyShowroom = document.getElementById('btnCopyShowroom');
+
+    const showroomSet     = new Set(); // edición en modal
+    const showroomApplied = new Set(); // aplicado en tabla
+
+    function parseListaShow(str){
+      if(!str) return [];
+      return str
+        .split(/[^\d]+/g)
+        .map(s => s.trim())
+        .filter(Boolean)
+        .filter(s => /^\d{4}$/.test(s));
+    }
+
+    function renderChipsShowroom(filterText = ''){
+      if (!chipsShowroom) return;
+      chipsShowroom.innerHTML = '';
+      const arr = Array.from(showroomSet).sort();
+      const f = (filterText || '').trim();
+      let validCount = 0; let invalidCount = 0;
+      for(const num of arr){
+        if (f && !num.includes(f)) continue;
+        const chip = document.createElement('span');
+        const isValid = roomCellMap.has(num);
+        chip.className = 'chip ' + (isValid ? 'show-valid' : 'show-invalid');
+        if (isValid) validCount++; else invalidCount++;
+        chip.innerHTML = `<span>${num}</span><span class="x" title="Quitar" aria-label="Quitar">×</span>`;
+        chip.querySelector('.x').addEventListener('click', ()=>{
+          showroomSet.delete(num);
+          renderChipsShowroom(filterShowroom?.value || '');
+        });
+        chipsShowroom.appendChild(chip);
+      }
+      if (countInsideShow) countInsideShow.textContent = String(showroomSet.size) + (invalidCount ? ` (inválidas: ${invalidCount})` : '');
+      const badge = document.getElementById('showroomBadge');
+      if (badge) badge.textContent = '(' + showroomApplied.size + ')';
+    }
+
+    function abrirModalShowroom(){
+      showroomSet.clear();
+      showroomApplied.forEach(v => showroomSet.add(v));
+      renderChipsShowroom();
+      if (inputShowroom) inputShowroom.value = '';
+      if (modalShowroom) modalShowroom.hidden = false;
+      setTimeout(()=>{ inputShowroom?.focus(); }, 60);
+    }
+    function cerrarModalShowroom(){ if (modalShowroom) modalShowroom.hidden = true; }
+
+    function aplicarShowroomEnTabla(){
+      showroomApplied.forEach(num => {
+        const td = roomCellMap.get(num);
+        if (td) td.classList.remove('estado-showroom');
+      });
+      showroomApplied.clear();
+      showroomSet.forEach(num => {
+        const td = roomCellMap.get(num);
+        if (td) {
+          td.classList.add('estado-showroom');
+          showroomApplied.add(num);
+        }
+      });
+      if (countShowroom) countShowroom.textContent = '(' + showroomApplied.size + ')';
+      const badge = document.getElementById('showroomBadge');
+      if (badge) badge.textContent = '(' + showroomApplied.size + ')';
+    
+      recalcOcupacion();
+    }
+
+    // Abrir modal
+    btnShowroom?.addEventListener('click', abrirModalShowroom);
+
+    // Limpiar todas
+    btnLimpiarShow?.addEventListener('click', ()=>{
+      showroomSet.clear();
+      renderChipsShowroom(filterShowroom?.value || '');
+    });
+
+    // Cerrar modal
+    btnCerrarShow?.addEventListener('click', cerrarModalShowroom);
+    modalShowroom?.addEventListener('click', (e)=>{ if (e.target === modalShowroom) cerrarModalShowroom(); });
+    document.addEventListener('keydown', (e)=>{ if (e.key === 'Escape' && !modalShowroom.hidden) cerrarModalShowroom(); });
+
+    // Aplicar (no cierra)
+    btnAplicarShow?.addEventListener('click', ()=>{
+      const modeEl = document.querySelector('input[name="modeShow"]:checked');
+      const mode = modeEl ? modeEl.value : 'add';
+      const arr = parseListaShow(inputShowroom?.value || '');
+
+      if (mode === 'add'){
+        arr.forEach(n => showroomSet.add(n));
+      } else if (mode === 'remove'){
+        arr.forEach(n => showroomSet.delete(n));
+      }
+      renderChipsShowroom(filterShowroom?.value || '');
+      if (inputShowroom) inputShowroom.value = '';
+      aplicarShowroomEnTabla();
+    });
+
+    // Filtro chips
+    filterShowroom?.addEventListener('input', (e)=>{
+      renderChipsShowroom(e.target.value || '');
+    });
+
+    // Copiar lista
+    btnCopyShowroom?.addEventListener('click', ()=>{
+      const list = Array.from(showroomSet).sort().join(', ');
+      navigator.clipboard.writeText(list).catch(()=>{});
+    });
+
+    // Atajos de teclado
+    inputShowroom?.addEventListener('keydown', (e)=>{
+      const val = inputShowroom.value.trim();
+      if ((e.key === 'Backspace' || e.key === 'Delete') && val === ''){
+        const last = Array.from(showroomSet).sort().pop();
+        if (last){
+          showroomSet.delete(last);
+          renderChipsShowroom(filterShowroom?.value || '');
+          e.preventDefault();
+        }
+      } else if (e.key === 'Enter'){
+        if (e.ctrlKey || !e.shiftKey){
+          e.preventDefault();
+          btnAplicarShow?.click();
+        }
+      }
+    });
+
+
+    // ====== Cálculo de % Ocupación (proyección) ======
+    function recalcOcupacion(){
+      try{
+        const occBase   = (typeof ocupadasApplied !== 'undefined' && ocupadasApplied && typeof ocupadasApplied.size === 'number') ? ocupadasApplied.size : 0;
+        const arrivals  = (typeof llegadasApplied !== 'undefined' && llegadasApplied && typeof llegadasApplied.size === 'number') ? llegadasApplied.size : 0;
+        const departures= (typeof salidasApplied  !== 'undefined' && salidasApplied  && typeof salidasApplied.size  === 'number') ? salidasApplied.size  : 0;
+
+        let projectedOcc = occBase + arrivals - departures;
+        projectedOcc = Math.max(0, Math.min(TOTAL_ROOMS, projectedOcc));
+
+        const pct = TOTAL_ROOMS > 0 ? Math.round((projectedOcc / TOTAL_ROOMS) * 100) : 0;
+
+        const v = document.getElementById('vOcup');
+        if (v) v.textContent = pct + '%';
+
+        const pill = document.getElementById('mOcup');
+        if (pill){
+          pill.classList.remove('is-low','is-mid','is-high');
+          if (pct < 60)      pill.classList.add('is-low');
+          else if (pct < 85) pill.classList.add('is-mid');
+          else               pill.classList.add('is-high');
+        }
+      }catch(e){ /* silent */ }
+    }
+    // Calcular al inicio
+    recalcOcupacion();
+
+  })();
+  </script>
+</body>
+</html>
