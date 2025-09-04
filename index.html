@@ -559,8 +559,7 @@ td.estado-llegada.marca-booking.marca-expedia::after{
 }
 
   
-
-/* === VIP reemplaza el avión en Llegadas (solo si .marca-vip) === */
+/* === Llegadas VIP: la 'V' dorada sustituye el avión SOLO si es llegada + VIP === */
 td.estado-llegada.marca-vip{ position: relative; }
 td.estado-llegada.marca-vip::after{
   content: "V";
@@ -579,7 +578,7 @@ td.estado-llegada.marca-vip::after{
   pointer-events: none;
   box-shadow: 0 0 0 1px rgba(0,0,0,0.08);
 }
-/* Si además es Booking/Expedia, estos siguen teniendo prioridad visual */
+/* Prioridad visual: si también tiene Booking o Expedia, muestran su propia insignia */
 td.estado-llegada.marca-booking.marca-vip::after{
   content: "B";
   background: #6366F1;
@@ -592,26 +591,29 @@ td.estado-llegada.marca-expedia.marca-vip::after{
 }
 
   
-/* === Prioridad visual: Salida > Llegada > Ocupada === */
-/* Ocupada + Salida (sin Llegada): se ve como Salida (amarillo) */
-td.estado-ocupada.estado-salida:not(.estado-llegada),
-td.estado-salida.estado-ocupada:not(.estado-llegada){
-  background-color: var(--salida-bg) !important;
-  box-shadow: inset 0 0 0 1px var(--salida-bd) !important;
+/* === VIP SIEMPRE visible: si la habitación es VIP, muestra 'V' arriba-derecha,
+       incluso cuando NO es llegada. Si ES llegada, ocultamos este ::before para
+       que actúe el ::after (que reemplaza al avión). */
+td.marca-vip{ position: relative; }
+td.marca-vip::before{
+  content: "V";
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  width: 16px;
+  height: 16px;
+  border-radius: 9999px;
+  background: #111827;
+  color: #f59e0b;
+  font-weight: 900;
+  font-size: 11px;
+  line-height: 16px;
+  text-align: center;
+  pointer-events: none;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.08);
 }
-/* Ocupada + Llegada (sin Salida): se ve como Llegada (azul) */
-td.estado-ocupada.estado-llegada:not(.estado-salida),
-td.estado-llegada.estado-ocupada:not(.estado-salida){
-  background-color: var(--llegada-bg) !important;
-  box-shadow: inset 0 0 0 1px var(--llegada-bd) !important;
-}
-/* Si tiene Salida y Llegada a la vez, estrobo entre ambos. Ocultamos el icono 🛌 de Ocupada. */
-td.estado-ocupada.estado-salida::after,
-td.estado-ocupada.estado-llegada::after,
-td.estado-salida.estado-ocupada::after,
-td.estado-llegada.estado-ocupada::after{
-  content: none !important;
-}
+/* En llegadas, dejamos que el ::after gobierne (V/B/E), así que ocultamos este ::before */
+td.estado-llegada.marca-vip::before{ content: none; }
 
   </style>
 </head>
@@ -2628,7 +2630,7 @@ td.estado-llegada.estado-ocupada::after{
     if (vBooking && !vBooking.textContent.trim()) vBooking.textContent = '0';
 
 
-    // === Habitaciones VIP (usa pill existente mVips / vVips) ===
+    // === VIPs: usa el botón existente mVips / vVips ===
     const mVips            = document.getElementById('mVips');
     const vVips            = document.getElementById('vVips');
     const modalVips        = document.getElementById('modalVips');
@@ -2644,7 +2646,7 @@ td.estado-llegada.estado-ocupada::after{
     const vipsBadge        = document.getElementById('vipsBadge');
 
     const roomMapVip       = (typeof roomCellMap!=='undefined') ? roomCellMap : new Map();
-    const vipsApplied      = new Set(); // rooms con marca-vip
+    const vipsApplied      = new Set();
     let   vipsEdit         = new Set();
 
     function tokenizeVips(str){
@@ -2682,15 +2684,13 @@ td.estado-llegada.estado-ocupada::after{
     }
 
     function abrirModalVips(){
-      vipsEdit.clear();
-      vipsApplied.forEach(n=> vipsEdit.add(n));
+      vipsEdit = new Set(vipsApplied);
       if (listVips) listVips.value = Array.from(vipsEdit).join(', ');
       renderChipsVips();
       if (vipsBadge) vipsBadge.textContent = `(${vipsApplied.size})`;
       if (modalVips) modalVips.hidden = false;
     }
     function cerrarModalVips(){ if (modalVips) modalVips.hidden = true; }
-
     mVips?.addEventListener('click', abrirModalVips);
     btnCerrarVips?.addEventListener('click', cerrarModalVips);
     modalVips?.addEventListener('click', (e)=>{ if (e.target===modalVips) cerrarModalVips(); });
@@ -2716,14 +2716,14 @@ td.estado-llegada.estado-ocupada::after{
     });
 
     function aplicarVipsEnTabla(){
-      // Quitar marca-vip a los anteriores
+      // Quitar marca-vip anteriores
       vipsApplied.forEach(num=>{
         const td = roomMapVip.get(num);
         if (td) td.classList.remove('marca-vip');
       });
       vipsApplied.clear();
 
-      // Aplicar nuevos: agregar marca-vip (no cambiamos salida/llegada/ocupada)
+      // Aplicar nuevos
       vipsEdit.forEach(num=>{
         const td = roomMapVip.get(num);
         if (td){
@@ -2737,7 +2737,6 @@ td.estado-llegada.estado-ocupada::after{
     }
     btnAplicarVips?.addEventListener('click', aplicarVipsEnTabla);
 
-    // init value
     if (vVips && !vVips.textContent.trim()) vVips.textContent = '0';
 
   })();
