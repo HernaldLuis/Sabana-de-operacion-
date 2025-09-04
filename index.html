@@ -487,6 +487,30 @@ html.strobeB td.estado-llegada.estado-salida{
   }
 }
 
+  
+/* === Prioridad visual: Salida > Llegada > Ocupada === */
+/* 1) Ocupada + Salida (sin Llegada): se ve como Salida (amarillo) */
+td.estado-ocupada.estado-salida:not(.estado-llegada),
+td.estado-salida.estado-ocupada:not(.estado-llegada){
+  background-color: var(--salida-bg) !important;
+  box-shadow: inset 0 0 0 1px var(--salida-bd) !important;
+}
+/* 2) Ocupada + Llegada (sin Salida): se ve como Llegada (azul) */
+td.estado-ocupada.estado-llegada:not(.estado-salida),
+td.estado-llegada.estado-ocupada:not(.estado-salida){
+  background-color: var(--llegada-bg) !important;
+  box-shadow: inset 0 0 0 1px var(--llegada-bd) !important;
+}
+/* 3) Si tiene Salida y Llegada a la vez, ya existe estrobo entre ambos colores.
+      En ese caso, ocultamos el icono 🛌 de Ocupada para no estorbar. */
+/* Ocultar icono de Ocupada cuando también sea Salida o Llegada */
+td.estado-ocupada.estado-salida::after,
+td.estado-ocupada.estado-llegada::after,
+td.estado-salida.estado-ocupada::after,
+td.estado-llegada.estado-ocupada::after{
+  content: none !important;
+}
+
   </style>
 </head>
 
