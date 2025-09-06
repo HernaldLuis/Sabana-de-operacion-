@@ -636,6 +636,18 @@ td.estado-llegada.marca-vip::before{ content: none; }
   }
 </style>
 
+
+  <!-- Configuración Supabase -->
+  <script>
+    window.SABANA_SUPABASE = {
+      url: "https://mzjthivwubvvjjsvbhtb.supabase.co",
+      key: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16anRoaXZ3dWJ2dmpqc3ZiaHRiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY5NjA3MzAsImV4cCI6MjA3MjUzNjczMH0.1wNvnBjhnOLLtpD-JmH1Hytrbo4P6HI6rA5Yv7mWaEs",
+      table: "sabana_historial"
+    };
+  </script>
+  <!-- SDK de Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 </head>
 
 <body>
@@ -2761,5 +2773,207 @@ td.estado-llegada.marca-vip::before{ content: none; }
 
   })();
   </script>
+
+<!-- === Sábana Operativa · Persistencia + Realtime (no invasivo) === -->
+<script>
+(() => {
+  // --- Config ---
+  const CFG = Object.assign({
+    url:  (window.SABANA_SUPABASE && window.SABANA_SUPABASE.url)  || "",
+    key:  (window.SABANA_SUPABASE && window.SABANA_SUPABASE.key)  || "",
+    table:(window.SABANA_SUPABASE && window.SABANA_SUPABASE.table)|| "sabana_historial",
+    uniqueCol: "date_key"
+  }, window.SABANA_SUPABASE || {});
+
+  const hasCloud = typeof window.supabase !== "undefined"
+                && typeof CFG.url === "string" && CFG.url.includes(".supabase.co")
+                && CFG.key && CFG.key.length > 20;
+
+  // Random client id (para no re-aplicar lo mismo que yo envié)
+  const CLIENT_ID = (crypto && crypto.randomUUID) ? crypto.randomUUID()
+                     : ("c_" + Math.random().toString(36).slice(2));
+
+  // --- Utilidades ---
+  function todayKey() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+  function readDateKeyFromPage() {
+    // Intenta leer de #fecha con formatos comunes
+    const el = document.querySelector('#fecha, .fecha, [data-fecha]');
+    let raw = el ? (el.textContent || el.innerText || el.getAttribute('data-fecha') || '').trim() : '';
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) {
+      const [dd, mm, yyyy] = raw.split('/');
+      return `${yyyy}-${mm}-${dd}`;
+    }
+    if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+    return todayKey();
+  }
+  function setDateKeyOnPage(dateKey) {
+    const el = document.querySelector('#fecha, .fecha, [data-fecha]');
+    if (!el) return;
+    const [y,m,d] = dateKey.split('-');
+    // Si originalmente usabas DD/MM/YYYY, muéstralo así; si no, ISO
+    const wantsDDMM = /\d{2}\/\d{2}\/\d{4}/.test(el.textContent || el.innerText || '');
+    el.textContent = wantsDDMM ? `${d}/${m}/${y}` : dateKey;
+    el.setAttribute('data-fecha', dateKey);
+  }
+
+  const LS_PREFIX = 'sabana:';
+
+  // --- Selección de contenedor (tabla envuelta en .contenedor-tabla) ---
+  function getContainer() {
+    return document.querySelector('.contenedor-tabla') ||
+           document.querySelector('.catalog-wrap') ||
+           document.querySelector('#scroller') ||
+           document.querySelector('.table-scroller') ||
+           document.querySelector('table.excel')?.parentElement;
+  }
+  function getTable() {
+    return document.querySelector('table.excel');
+  }
+
+  // --- Serialización / Aplicación ---
+  function serializeState() {
+    // Si el proyecto define su propio serializador, úsalo
+    if (typeof window.sabanaSerialize === 'function') {
+      try { 
+        const custom = window.sabanaSerialize();
+        if (custom) return Object.assign({_client: CLIENT_ID, savedAt: new Date().toISOString()}, custom);
+      } catch(e){ console.warn('[sabana] custom serialize error', e); }
+    }
+    const cont = getContainer();
+    const t = getTable();
+    const metrics = {
+      ocupacion: (document.getElementById('vOcup')   || {}).textContent?.trim() ?? '',
+      nps:       (document.getElementById('vNps')    || {}).textContent?.trim() ?? '',
+      queue:     (document.getElementById('vQueue')  || {}).textContent?.trim() ?? '',
+      ip:        (document.getElementById('vIp')     || {}).textContent?.trim() ?? '',
+      vExpedia:  (document.getElementById('vExpedia')|| {}).textContent?.trim() ?? '',
+      vBooking:  (document.getElementById('vBooking')|| {}).textContent?.trim() ?? '',
+      vVips:     (document.getElementById('vVips')   || {}).textContent?.trim() ?? ''
+    };
+    const html = cont ? cont.innerHTML : (t ? t.outerHTML : '');
+    return { html, metrics, _client: CLIENT_ID, savedAt: new Date().toISOString() };
+  }
+
+  function applyState(state) {
+    if (!state) return;
+    // Si el proyecto define su propio aplicador, úsalo
+    if (typeof window.sabanaApply === 'function') {
+      try { if (window.sabanaApply(state) !== false) return; } catch(e){ console.warn('[sabana] custom apply error', e); }
+    }
+    const cont = getContainer();
+    if (cont && state.html) {
+      cont.innerHTML = state.html; // Reemplaza solo el contenido de la caja de la tabla
+    } else if (!cont && state.html) {
+      // Último recurso: si no encontramos el contenedor, intenta sobre la tabla
+      const t = getTable();
+      if (t) t.outerHTML = state.html;
+    }
+    // Métricas si existen
+    const setTxt = (id,val)=>{const el=document.getElementById(id); if(el && typeof val==='string') el.textContent=val;};
+    if (state.metrics) {
+      setTxt('vOcup',    state.metrics.ocupacion);
+      setTxt('vNps',     state.metrics.nps);
+      setTxt('vQueue',   state.metrics.queue);
+      setTxt('vIp',      state.metrics.ip);
+      setTxt('vExpedia', state.metrics.vExpedia);
+      setTxt('vBooking', state.metrics.vBooking);
+      setTxt('vVips',    state.metrics.vVips);
+    }
+  }
+
+  // --- Local cache ---
+  function saveLocal(dateKey, state) {
+    try { localStorage.setItem(LS_PREFIX+dateKey, JSON.stringify(state)); } catch {}
+  }
+  function loadLocal(dateKey) {
+    try { const raw = localStorage.getItem(LS_PREFIX+dateKey); return raw ? JSON.parse(raw) : null; } catch { return null; }
+  }
+
+  // --- Supabase client ---
+  let sb = null;
+  if (hasCloud) {
+    try { sb = window.supabase.createClient(CFG.url, CFG.key); } catch(e){ console.error('[sabana] supabase init error', e); }
+  }
+
+  async function saveCloud(dateKey, state) {
+    if (!sb) return;
+    const payload = Object.assign({}, state, { _client: CLIENT_ID });
+    await sb.from(CFG.table).upsert({ [CFG.uniqueCol]: dateKey, payload });
+  }
+  async function loadCloud(dateKey) {
+    if (!sb) return null;
+    const { data, error } = await sb.from(CFG.table).select('payload').eq(CFG.uniqueCol, dateKey).maybeSingle();
+    if (error) { console.warn('[sabana] loadCloud error', error); return null; }
+    return data ? data.payload : null;
+  }
+
+  // --- API pública para tu página ---
+  window.guardarDia = async function() {
+    const dk = readDateKeyFromPage();
+    const st = serializeState();
+    saveLocal(dk, st);
+    try { if (sb) await saveCloud(dk, st); } catch(e){ console.warn('[sabana] saveCloud error', e); }
+  };
+  window.cargarDia = async function(dateKey) {
+    if (dateKey) setDateKeyOnPage(dateKey);
+    const dk = dateKey || readDateKeyFromPage();
+    let st = null;
+    try { if (sb) st = await loadCloud(dk); } catch(e){ console.warn('[sabana] loadCloud error', e); }
+    if (!st) st = loadLocal(dk);
+    if (st) applyState(st);
+    subscribeRealtime(dk);
+  };
+
+  // --- Autosave discreto (observa cambios en la tabla/metrics) ---
+  let saveTimer = null;
+  function scheduleAutosave() {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => { window.guardarDia(); }, 800);
+  }
+  function initAutosave() {
+    const cont = getContainer();
+    if (cont) {
+      new MutationObserver(scheduleAutosave).observe(cont, { childList: true, subtree: true, attributes: true });
+    }
+    ['vOcup','vNps','vQueue','vIp','vExpedia','vBooking','vVips'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) new MutationObserver(scheduleAutosave).observe(el, { characterData: true, childList: true, subtree: true });
+    });
+  }
+
+  // --- Realtime ---
+  let channel = null;
+  function unsubscribeRealtime() { if (channel && sb) { sb.removeChannel(channel); channel = null; } }
+  function subscribeRealtime(dateKey) {
+    if (!sb) return;
+    unsubscribeRealtime();
+    channel = sb.channel('sabana_'+dateKey)
+      .on('postgres_changes', { event: '*', schema: 'public', table: CFG.table, filter: `${CFG.uniqueCol}=eq.${dateKey}` },
+        (payload) => {
+          const rec = payload.new || payload.record;
+          if (!rec || !rec.payload) return;
+          if (rec.payload._client === CLIENT_ID) return; // evita re-aplicar lo mío
+          applyState(rec.payload);
+          saveLocal(dateKey, rec.payload);
+        })
+      .subscribe();
+  }
+
+  // --- Boot ---
+  function boot() {
+    initAutosave();
+    window.cargarDia(); // usa la fecha visible o la de hoy
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
+})();
+</script>
+
 </body>
 </html>
