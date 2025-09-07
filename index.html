@@ -4221,6 +4221,103 @@ Estado badge: '+(els.sbStatus?.textContent||'n/a'));
 
 <div id="sbBubble" class="sb-bubble" style="display:none">SB…</div>
 
+
+<script>
+// ======= LIVE SYNC: sabana_state_live (HTML completo del día) =======
+(function(){"use strict";
+  if(!window.supabase) return;
+  const sb = window.__sb || window.supabase.createClient("https://mzjthivwubvvjjsvbhtb.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16anRoaXZ3dWJ2dmpqc3ZiaHRiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY5NjA3MzAsImV4cCI6MjA3MjUzNjczMH0.1wNvnBjhnOLLtpD-JmH1Hytrbo4P6HI6rA5Yv7mWaEs");
+  const clientId = (localStorage.getItem("sb_client_id") || (Date.now()+"-"+Math.random().toString(16).slice(2)));
+  localStorage.setItem("sb_client_id", clientId);
+
+  const bubble = document.getElementById('sbBubble');
+  function say(txt){ if(bubble){ bubble.style.display='block'; bubble.textContent = 'SB: '+txt; } }
+
+  function todayKey(){
+    const d = new Date(); d.setHours(0,0,0,0);
+    return d.toISOString().slice(0,10);
+  }
+  const DATE = todayKey();
+
+  function getTableEl(){
+    return document.querySelector('table.excel');
+  }
+
+  let lastHtml = null;
+  function captureHtml(){
+    const tbl = getTableEl();
+    if(!tbl) return null;
+    return tbl.outerHTML;
+  }
+
+  async function applyHtml(html){
+    const tbl = getTableEl();
+    if(!tbl || !html) return;
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html.trim();
+    const newNode = tmp.firstElementChild;
+    if(!newNode) return;
+    tbl.replaceWith(newNode);
+    say('actualizado (remoto)');
+  }
+
+  async function loadInitial(){
+    try{
+      const { data, error } = await sb.from('sabana_state_live').select('html, updated_by, updated_at').eq('date_key', DATE).maybeSingle();
+      if(error) throw error;
+      if(data && data.html) {
+        lastHtml = data.html;
+        await applyHtml(data.html);
+      }
+    }catch(e){ console.warn('loadInitial', e); }
+  }
+
+  let t=null, saving=false;
+  async function saveNow(){ 
+    const html = captureHtml();
+    if(!html || html===lastHtml) return;
+    saving = true;
+    try{
+      const payload = { date_key: DATE, html, updated_by: clientId };
+      const { data, error } = await sb.from('sabana_state_live').upsert(payload, { onConflict: 'date_key' }).select().single();
+      if(error) throw error;
+      lastHtml = html;
+      say('guardado ✓');
+    }catch(e){ console.error('saveNow', e); say('error al guardar'); }
+    finally{ saving=false; }
+  }
+  function scheduleSave(){
+    if(saving) return;
+    clearTimeout(t);
+    t = setTimeout(saveNow, 700);
+  }
+
+  const root = document.body;
+  ['click','input','change','keydown'].forEach(evt=>{
+    root.addEventListener(evt, (e)=>{
+      const tbl = getTableEl();
+      if(tbl && tbl.contains(e.target)) scheduleSave();
+    }, true);
+  });
+
+  try{
+    sb.channel('sabana_live')
+      .on('postgres_changes', { event: '*', schema:'public', table:'sabana_state_live', filter: 'date_key=eq.'+DATE }, (payload)=>{
+        const row = payload.new || payload.old;
+        if(!row) return;
+        if(row.updated_by === clientId) return;
+        if(payload.new && payload.new.html && payload.new.html !== lastHtml){
+          lastHtml = payload.new.html;
+          applyHtml(payload.new.html);
+        }
+      })
+      .subscribe();
+  }catch(e){ console.warn('subscribe live', e); }
+
+  loadInitial();
+})();
+</script>
+
 </body>
 </html>
 
