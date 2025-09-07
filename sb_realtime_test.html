@@ -1,0 +1,35 @@
+<!doctype html><html lang="es"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SB Tester</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<div id="out" style="font:600 14px system-ui;padding:16px"></div>
+<button id="ping">Ping</button>
+<button id="ins">Insertar TEST (hoy)</button>
+<button id="get">Leer 5</button>
+<script>
+const OUT = document.getElementById('out');
+const log=(m)=>OUT.innerHTML = (typeof m==='string'?m:JSON.stringify(m,null,2)).replace(/\n/g,'<br>');
+
+const URL="https://mzjthivwubvvjjsvbhtb.supabase.co";
+const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16anRoaXZ3dWJ2dmpqc3ZiaHRiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY5NjA3MzAsImV4cCI6MjA3MjUzNjczMH0.1wNvnBjhnOLLtpD-JmH1Hytrbo4P6HI6rA5Yv7mWaEs";
+const sb = supabase.createClient(URL, KEY);
+
+async function health(){
+  try{
+    const { error } = await sb.from('events').select('id',{head:true,count:'exact'});
+    if(error){ log({estado:'error', error}); } else { log({estado:'online', url:URL}); }
+  }catch(e){ log({estado:'error', e:e.message}); }
+}
+async function insertTest(){
+  const d=new Date(); d.setHours(12,0,0,0);
+  const { data, error } = await sb.from('events').insert({dt:d.toISOString(), rooms:['1211'], title:'TEST', tag:'cumpleaños'}).select().single();
+  log(error? error : {insertado:data});
+}
+async function read5(){
+  const { data, error } = await sb.from('events').select('id,dt,rooms,title,tag,created_at').order('created_at',{ascending:false}).limit(5);
+  log(error? error : data);
+}
+document.getElementById('ping').onclick=health;
+document.getElementById('ins').onclick=insertTest;
+document.getElementById('get').onclick=read5;
+health();
+</script>
