@@ -775,39 +775,9 @@ td .evt-badge{
 .hist-close{cursor:pointer;font:800 14px system-ui;color:#0f172a}
 </style>
 
-
-<style>
-/* Badges y popover para eventos */
-.evt-badge{
-  display:inline-flex;align-items:center;justify-content:center;
-  width:26px;height:26px;border-radius:9999px;
-  border:2px solid #22d3ee;background:#e0f2fe;color:#0c4a6e;
-  font-size:16px;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.12);
-}
-.evt-badge:hover{transform:scale(1.05)}
-.evt-pop{
-  position:absolute; right:0; top:32px; z-index:9000;
-  min-width:260px; max-width:320px;
-  background:#fff; color:#0f172a;
-  border:1px solid #e5e7eb; border-radius:12px;
-  box-shadow:0 8px 24px rgba(15,23,42,.15);
-  padding:12px; font:500 13px system-ui, Segoe UI, Roboto;
-}
-.evt-pop h4{margin:.2rem 0 .4rem 0; font-size:14px}
-.evt-pop .row{margin:.15rem 0}
-.evt-pop .nota{margin-top:.4rem; padding:.5rem; background:#f8fafc; border-radius:8px; border:1px dashed #cbd5e1}
-.evt-pop .close{position:absolute; top:6px; right:8px; cursor:pointer; font-weight:700}
-/* Bubble de diagnóstico */
-.sb-bubble{
-  position:fixed; right:12px; bottom:12px; z-index:9999;
-  background:#0b1220; color:#d1e9ff; padding:8px 10px; border-radius:10px;
-  font:600 12px system-ui; box-shadow:0 6px 16px rgba(2,6,23,.35); opacity:.9
-}
-</style>
-
 </head>
 
-<body><div id="sbStatus" style="position:fixed;top:8px;right:8px;z-index:1200;background:#f1f5f9;border:1px solid #e5e7eb;border-radius:9999px;padding:4px 8px;font:700 11px system-ui;color:#0f172a;display:none">SB: …</div>
+<body><div id="sbStatus" style="position:fixed;top:8px;right:8px;z-index:1200;background:#f1f5f9;border:1px solid #e5e7eb;border-radius:9999px;padding:4px 8px;font:700 11px system-ui;color:#0f172a;display:none">SB: …</div>>
   <div class="page-wrap">
     <header class="header-sabana">
       <img class="logo"
@@ -4070,253 +4040,96 @@ td .evt-badge{
 </div>
 
 
-<!-- Supabase SDK -->
+<!-- === LIVE SYNC LITE (no cambia UI) === -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-(function(){"use strict";
+(function(){
+  "use strict";
+  // Credenciales
   const SB_URL = "https://mzjthivwubvvjjsvbhtb.supabase.co";
   const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16anRoaXZ3dWJ2dmpqc3ZiaHRiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY5NjA3MzAsImV4cCI6MjA3MjUzNjczMH0.1wNvnBjhnOLLtpD-JmH1Hytrbo4P6HI6rA5Yv7mWaEs";
-  let sb = null;
-  const els = {
-    sbStatus: document.getElementById('sbStatus'),
-    vEventos: document.getElementById('vEventos'),
-    btnDiag: document.getElementById('btnSBDiag'),
-    btnForce: document.getElementById('btnSBForce')
-  };
-
-  function badge(el, txt, ok=true){
-    const bub = document.getElementById('sbBubble');
-    if(bub){ bub.style.display='block'; bub.textContent = `SB: ${txt}`; }
-
-    if(!el) return;
-    el.style.display = 'inline-block';
-    el.textContent = "SB: " + txt;
-    el.style.background = ok ? '#dcfce7' : '#fee2e2';
-    el.style.borderColor = ok ? '#10b981' : '#ef4444';
-    el.style.color = ok ? '#065f46' : '#7f1d1d';
-  }
-
-  function toDayRangeLocal(){
-    const a = new Date(); a.setHours(0,0,0,0);
-    const b = new Date(a); b.setDate(b.getDate()+1);
-    return [a.toISOString(), b.toISOString()];
-  }
-
-  const ICONS = {
-    'cumpleaños': '🎂', 'cumple': '🎂',
-    'aniversario': '🎉',
-    'boda': '💍',
-    'luna de miel': '🌙', 'honeymoon': '🌙',
-    'shooting':'📸','fotográfico':'📸',
-    'vip':'👑','vip personalizado':'👑',
-    'corporativo':'🏢','visita corporativa':'🏢',
-    'amenidad':'🎁','amenidad especial':'🎁'
-  };
-
-  function clearEventBadges(){
-    document.querySelectorAll('.evt-badge, .evt-pop').forEach(n=>n.remove());
-  }
-
-  function findDashCellForRoom(room){
-    const tds = document.querySelectorAll('table.excel td');
-    for(const td of tds){
-      if(td.textContent.trim() === String(room)){
-        const typeCell = td.nextElementSibling;
-        if(!typeCell) return null;
-        const dashCell = typeCell.nextElementSibling;
-        return dashCell || null;
-      }
-    }
-    return null;
-  }
-
-  function showPop(anchor, ev){
-    anchor.parentElement.querySelectorAll('.evt-pop').forEach(n=>n.remove());
-    const pop = document.createElement('div');
-    pop.className = 'evt-pop';
-    const dt = new Date(ev.dt);
-    const fecha = dt.toLocaleString(undefined, { dateStyle:'medium', timeStyle:'short' });
-    const icon = getIcon(ev.tag);
-    pop.innerHTML = `
-      <div class="close" title="Cerrar">×</div>
-      <h4>${icon} ${escapeHtml(ev.title||'(sin título)')}</h4>
-      <div class="row"><b>Fecha:</b> ${fecha}</div>
-      <div class="row"><b>Habitación(es):</b> ${(ev.rooms||[]).join(', ')}</div>
-      ${ ev.tag ? `<div class="row"><b>Etiqueta:</b> ${escapeHtml(ev.tag)}</div>` : '' }
-      ${ ev.specs ? `<div class="nota">$ {escapeHtml(ev.specs)}</div>` : '' }
-    `.replace('$ ', '$');
-    pop.querySelector('.close').onclick = ()=> pop.remove();
-    anchor.parentElement.style.position = 'relative';
-    anchor.parentElement.appendChild(pop);
-  }
-
-  function escapeHtml(str){
-    return String(str).replace(/[&<>\"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'})[s]);
-  }
-
-  function getIcon(tag){
-    if(!tag) return '★';
-    const t = tag.toLowerCase();
-    for(const k in ICONS){ if(t.includes(k)) return ICONS[k]; }
-    return '★';
-  }
-
-  async function renderTodayEvents(){
-    if(!sb) return;
-    clearEventBadges();
-    const [from, to] = toDayRangeLocal();
-    let data, error;
-    try{({ data, error } = await sb.from('events')
-      .select('id,dt,rooms,title,tag,specs')
-      .gte('dt', from).lt('dt', to));}catch(e){ error = e; }
-    if(error){ console.error(error); badge(els.sbStatus,'error',false); return; }
-
-    if(els.vEventos) els.vEventos.textContent = String(data?.length||0);
-
-    (data||[]).forEach(ev=>{
-      (ev.rooms||[]).forEach(room=>{
-        const dash = findDashCellForRoom(room);
-        if(!dash) return;
-        const b = document.createElement('button');
-        b.type = 'button';
-        b.className = 'evt-badge';
-        b.title = (ev.title||'Evento');
-        b.textContent = getIcon(ev.tag);
-        b.onclick = (e)=>{ e.stopPropagation(); showPop(b, ev); };
-        dash.innerHTML = ''; dash.appendChild(b);
-      });
-    });
-  }
-
-  async function init(){
-    try{ sb = supabase.createClient(SB_URL, SB_KEY); }
-    catch(e){ console.error(e); badge(els.sbStatus, 'SDK error', false); return; }
-
-    try{ 
-      const { error } = await sb.from('events').select('id',{ head:true, count:'exact' });
-      if(error) throw error;
-      badge(els.sbStatus, 'online', true);
-    }catch(e){ console.error(e); badge(els.sbStatus, 'offline', false); }
-
-    await renderTodayEvents();
-
-    try{ 
-      sb.channel('events_rt')
-        .on('postgres_changes', { event: '*', schema:'public', table:'events' }, (payload)=> { renderTodayEvents(); })
-        .subscribe();
-    }catch(e){ console.warn('No realtime', e); }
-
-    if(els.btnForce) els.btnForce.onclick = ()=> renderTodayEvents();
-    if(els.btnDiag) els.btnDiag.onclick = ()=> {
-      alert('SB url: '+SB_URL+'
-Estado badge: '+(els.sbStatus?.textContent||'n/a'));
-    };
-  }
-
-  if(window.supabase) init();
-  else window.addEventListener('load', init);
-})();
-</script>
-
-
-<div id="sbBubble" class="sb-bubble" style="display:none">SB…</div>
-
-
-<script>
-// ======= LIVE SYNC: sabana_state_live (HTML completo del día) =======
-(function(){"use strict";
-  if(!window.supabase) return;
-  const sb = window.__sb || window.supabase.createClient("https://mzjthivwubvvjjsvbhtb.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16anRoaXZ3dWJ2dmpqc3ZiaHRiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY5NjA3MzAsImV4cCI6MjA3MjUzNjczMH0.1wNvnBjhnOLLtpD-JmH1Hytrbo4P6HI6rA5Yv7mWaEs");
-  const clientId = (localStorage.getItem("sb_client_id") || (Date.now()+"-"+Math.random().toString(16).slice(2)));
+  if(!window.supabase){ console.warn("SB SDK ausente"); return; }
+  const sb = supabase.createClient(SB_URL, SB_KEY);
+  const clientId = localStorage.getItem("sb_client_id") || (Date.now()+"-"+Math.random().toString(16).slice(2));
   localStorage.setItem("sb_client_id", clientId);
-
-  const bubble = document.getElementById('sbBubble');
-  function say(txt){ if(bubble){ bubble.style.display='block'; bubble.textContent = 'SB: '+txt; } }
-
-  function todayKey(){
-    const d = new Date(); d.setHours(0,0,0,0);
-    return d.toISOString().slice(0,10);
-  }
+  function todayKey(){ const d=new Date(); d.setHours(0,0,0,0); return d.toISOString().slice(0,10); }
   const DATE = todayKey();
+  function getTable(){ return document.querySelector("table.excel"); }
 
-  function getTableEl(){
-    return document.querySelector('table.excel');
+  function applyTableHtml(html){
+    const host = getTable(); if(!host || !html) return;
+    const tmp = document.createElement("div"); tmp.innerHTML = html.trim();
+    const incoming = tmp.querySelector("table.excel"); if(!incoming) return;
+    const hostBody = host.tBodies && host.tBodies[0];
+    const incBody  = incoming.tBodies && incoming.tBodies[0];
+    if(hostBody && incBody){ hostBody.innerHTML = incBody.innerHTML; }
+    else{ host.innerHTML = incoming.innerHTML; }
+    if(typeof window.initSabana === "function"){ try{ window.initSabana(); }catch(_){ } }
   }
 
-  let lastHtml = null;
-  function captureHtml(){
-    const tbl = getTableEl();
-    if(!tbl) return null;
-    return tbl.outerHTML;
-  }
-
-  async function applyHtml(html){
-    const tbl = getTableEl();
-    if(!tbl || !html) return;
-    const tmp = document.createElement('div');
-    tmp.innerHTML = html.trim();
-    const newNode = tmp.firstElementChild;
-    if(!newNode) return;
-    tbl.replaceWith(newNode);
-    say('actualizado (remoto)');
+  function captureTableHtml(){
+    const host = getTable(); if(!host) return null;
+    const wrap = document.createElement("div");
+    const clone = host.cloneNode(true);
+    wrap.appendChild(clone);
+    return wrap.innerHTML;
   }
 
   async function loadInitial(){
     try{
-      const { data, error } = await sb.from('sabana_state_live').select('html, updated_by, updated_at').eq('date_key', DATE).maybeSingle();
-      if(error) throw error;
-      if(data && data.html) {
-        lastHtml = data.html;
-        await applyHtml(data.html);
-      }
-    }catch(e){ console.warn('loadInitial', e); }
+      const { data, error } = await sb.from("sabana_state_live")
+        .select("html, updated_by, updated_at").eq("date_key", DATE).maybeSingle();
+      if(!error && data && data.html) applyTableHtml(data.html);
+    }catch(e){ console.warn("sync load:", e); }
   }
 
-  let t=null, saving=false;
-  async function saveNow(){ 
-    const html = captureHtml();
+  let lastHtml=null, saving=false, t=null;
+  async function saveNow(){
+    const html = captureTableHtml();
     if(!html || html===lastHtml) return;
     saving = true;
     try{
       const payload = { date_key: DATE, html, updated_by: clientId };
-      const { data, error } = await sb.from('sabana_state_live').upsert(payload, { onConflict: 'date_key' }).select().single();
+      const { error } = await sb.from("sabana_state_live").upsert(payload, { onConflict: "date_key" });
       if(error) throw error;
       lastHtml = html;
-      say('guardado ✓');
-    }catch(e){ console.error('saveNow', e); say('error al guardar'); }
+    }catch(e){ console.warn("sync save:", e); }
     finally{ saving=false; }
   }
-  function scheduleSave(){
-    if(saving) return;
-    clearTimeout(t);
-    t = setTimeout(saveNow, 700);
-  }
+  function scheduleSave(){ if(saving) return; clearTimeout(t); t=setTimeout(saveNow, 600); }
 
-  const root = document.body;
-  ['click','input','change','keydown'].forEach(evt=>{
-    root.addEventListener(evt, (e)=>{
-      const tbl = getTableEl();
+  ["click","input","change","keydown"].forEach(ev=>{
+    document.addEventListener(ev, (e)=>{
+      const tbl = getTable();
       if(tbl && tbl.contains(e.target)) scheduleSave();
     }, true);
   });
 
+  const mo = new MutationObserver(()=>scheduleSave());
+  const startObserver = ()=>{
+    const tbl=getTable(); if(!tbl) return;
+    const tb = tbl.tBodies && tbl.tBodies[0] || tbl;
+    try{ mo.disconnect(); mo.observe(tb, {childList:true, subtree:true, characterData:true}); }catch(_){}
+  };
+  window.addEventListener("load", startObserver);
+  setTimeout(startObserver, 800);
+
   try{
-    sb.channel('sabana_live')
-      .on('postgres_changes', { event: '*', schema:'public', table:'sabana_state_live', filter: 'date_key=eq.'+DATE }, (payload)=>{
-        const row = payload.new || payload.old;
-        if(!row) return;
-        if(row.updated_by === clientId) return;
-        if(payload.new && payload.new.html && payload.new.html !== lastHtml){
-          lastHtml = payload.new.html;
-          applyHtml(payload.new.html);
-        }
-      })
+    sb.channel("sabana_live")
+      .on("postgres_changes",
+          { event:"*", schema:"public", table:"sabana_state_live", filter:"date_key=eq."+DATE },
+          (payload)=>{
+            const row = payload.new || payload.old;
+            if(!row || (row.updated_by && row.updated_by===clientId)) return;
+            if(payload.new && payload.new.html){ applyTableHtml(payload.new.html); startObserver(); }
+          })
       .subscribe();
-  }catch(e){ console.warn('subscribe live', e); }
+  }catch(e){ console.warn("sync rt:", e); }
 
   loadInitial();
 })();
 </script>
+<!-- === /LIVE SYNC LITE === -->
 
 </body>
 </html>
