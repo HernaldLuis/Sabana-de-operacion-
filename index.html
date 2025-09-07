@@ -775,6 +775,36 @@ td .evt-badge{
 .hist-close{cursor:pointer;font:800 14px system-ui;color:#0f172a}
 </style>
 
+
+<style>
+/* Badges y popover para eventos */
+.evt-badge{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:26px;height:26px;border-radius:9999px;
+  border:2px solid #22d3ee;background:#e0f2fe;color:#0c4a6e;
+  font-size:16px;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.12);
+}
+.evt-badge:hover{transform:scale(1.05)}
+.evt-pop{
+  position:absolute; right:0; top:32px; z-index:9000;
+  min-width:260px; max-width:320px;
+  background:#fff; color:#0f172a;
+  border:1px solid #e5e7eb; border-radius:12px;
+  box-shadow:0 8px 24px rgba(15,23,42,.15);
+  padding:12px; font:500 13px system-ui, Segoe UI, Roboto;
+}
+.evt-pop h4{margin:.2rem 0 .4rem 0; font-size:14px}
+.evt-pop .row{margin:.15rem 0}
+.evt-pop .nota{margin-top:.4rem; padding:.5rem; background:#f8fafc; border-radius:8px; border:1px dashed #cbd5e1}
+.evt-pop .close{position:absolute; top:6px; right:8px; cursor:pointer; font-weight:700}
+/* Bubble de diagnóstico */
+.sb-bubble{
+  position:fixed; right:12px; bottom:12px; z-index:9999;
+  background:#0b1220; color:#d1e9ff; padding:8px 10px; border-radius:10px;
+  font:600 12px system-ui; box-shadow:0 6px 16px rgba(2,6,23,.35); opacity:.9
+}
+</style>
+
 </head>
 
 <body><div id="sbStatus" style="position:fixed;top:8px;right:8px;z-index:1200;background:#f1f5f9;border:1px solid #e5e7eb;border-radius:9999px;padding:4px 8px;font:700 11px system-ui;color:#0f172a;display:none">SB: …</div>
@@ -4055,6 +4085,9 @@ td .evt-badge{
   };
 
   function badge(el, txt, ok=true){
+    const bub = document.getElementById('sbBubble');
+    if(bub){ bub.style.display='block'; bub.textContent = `SB: ${txt}`; }
+
     if(!el) return;
     el.style.display = 'inline-block';
     el.textContent = "SB: " + txt;
@@ -4184,6 +4217,9 @@ Estado badge: '+(els.sbStatus?.textContent||'n/a'));
   else window.addEventListener('load', init);
 })();
 </script>
+
+
+<div id="sbBubble" class="sb-bubble" style="display:none">SB…</div>
 
 </body>
 </html>
