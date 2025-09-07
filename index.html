@@ -4071,7 +4071,7 @@ td .evt-badge{
   }
   async function fetchMonth(d){
     if(!sb || !window.sbRefreshMonth){ return; }
-    try{ await window.sbRefreshMonth(d||new Date()); setSBStatus('online', true); }
+    try{ await window.sbRefreshMonth(d||new Date()); if(window.__sb){setSBStatus('online','ok');}else{setSBStatus('sin sb','err');} }
     catch{ setSBStatus('error', false); }
   }
 
@@ -4113,7 +4113,7 @@ td .evt-badge{
     try{
       const { data, error } = await sb.from('events').insert(payload).select().single();
       if(error){ console.warn('SB insert error', error); setSBStatus('error', false); return false; }
-      setSBStatus('online', true);
+      if(window.__sb){setSBStatus('online','ok');}else{setSBStatus('sin sb','err');}
       // Merge immediate in local (realtime también llegará)
       const arr = loadLocal(); arr.push({ ...payload, id:data.id }); saveLocal(arr); repaint();
       return true;
@@ -4199,7 +4199,7 @@ td .evt-badge{
   async function refreshMonthNow(){
     const d = parseCalMonthLabel() || new Date();
     if (window.sbRefreshMonth){
-      try{ await window.sbRefreshMonth(d); setSBStatus('online', 'ok'); }
+      try{ await window.sbRefreshMonth(d); if(window.__sb){setSBStatus('online','ok');}else{setSBStatus('sin sb','err');} }
       catch(e){ setSBStatus('error', 'err'); }
     } else {
       setSBStatus('sin-modulo', 'err');
@@ -4216,7 +4216,7 @@ td .evt-badge{
 
   // Realtime status probing (simple): if __sbEventsCh exists, assume ok
   setTimeout(()=>{
-    if(sb && window.__sbEventsCh){ setSBStatus('online', 'ok'); }
+    if(sb && window.__sbEventsCh){ if(window.__sb){setSBStatus('online','ok');}else{setSBStatus('sin sb','err');} }
     else if(sb){ setSBStatus('conectando…', 'warn'); refreshMonthNow(); }
     else { setSBStatus('sin sb', 'err'); }
   }, 800);
@@ -4288,5 +4288,26 @@ td .evt-badge{
   document.getElementById('sbDiagFetch')?.addEventListener('click', fetch10);
   document.getElementById('sbDiagInsert')?.addEventListener('click', insertTest);
   document.getElementById('sbDiagDelete')?.addEventListener('click', deleteTest);
+})();
+</script>
+
+<script>
+(function(){
+  const s = document.getElementById('sbStatus');
+  function setSBStatus(txt, tone){
+    if(!s) return;
+    const tones={ok:{bg:'#ecfdf5',bd:'#10b981',fg:'#065f46'},err:{bg:'#fee2e2',bd:'#fecaca',fg:'#7f1d1d'},warn:{bg:'#fef3c7',bd:'#f59e0b',fg:'#7c2d12'}};
+    const t=tones[tone||'warn']; s.textContent='SB: '+txt; s.style.background=t.bg; s.style.borderColor=t.bd; s.style.color=t.fg;
+  }
+  async function health(){
+    try{
+      if(!window.__sb){ setSBStatus('sin sb','err'); return; }
+      const { data, error } = await window.__sb.from('events').select('id', { count:'exact', head:true });
+      if(error){ setSBStatus('error','err'); } else { setSBStatus('online','ok'); }
+    }catch(e){ setSBStatus('error','err'); }
+  }
+  // run health after load
+  if(document.readyState==='complete' || document.readyState==='interactive'){ setTimeout(health, 400); }
+  else { document.addEventListener('DOMContentLoaded', ()=> setTimeout(health,400)); }
 })();
 </script>
