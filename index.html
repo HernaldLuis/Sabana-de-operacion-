@@ -839,6 +839,7 @@ td .evt-badge{
         </button>
 <button type="button" class="stat-pill" id="btnCalendario">📅 Calendario</button>
 <button type="button" class="stat-pill" id="btnSBForce">↻ Actualizar</button>
+<button type="button" class="stat-pill" id="btnSBDiag">🧪 Diagnóstico</button>
 <button type="button" class="stat-pill" id="btnHistorico">🗂 Histórico</button>
         <button type="button" class="stat-pill stat-reset" id="mReset" title="Restaurar (vaciar tabla)">
           <span>⟲</span><span class="label">Restaurar</span><span class="value">—</span>
@@ -4020,6 +4021,24 @@ td .evt-badge{
 })();
 </script>
 
+
+<div id="sbDiagBackdrop" style="position:fixed;inset:0;background:rgba(2,6,23,.55);display:none;align-items:center;justify-content:center;z-index:1400">
+  <div style="width:min(960px,96vw);height:min(640px,92vh);background:#fff;border-radius:16px;box-shadow:0 24px 64px rgba(0,0,0,.35);display:flex;flex-direction:column;overflow:hidden">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #e5e7eb;background:#f8fafc">
+      <div style="font:800 16px system-ui;color:#0f172a;display:flex;align-items:center;gap:8px">🧪 Diagnóstico Supabase</div>
+      <button id="sbDiagClose" class="btn" style="font:800 12px system-ui;border:1px solid #e5e7eb;border-radius:10px;padding:6px 10px;background:#fff">Cerrar</button>
+    </div>
+    <div style="padding:12px;display:flex;gap:12px;border-bottom:1px solid #e5e7eb;flex-wrap:wrap">
+      <div style="font:700 12px system-ui;color:#334155">URL:</div><div id="sbDiagUrl" style="font:700 12px system-ui;color:#0f172a"></div>
+      <button class="btn" id="sbDiagPing" style="margin-left:auto;border:1px solid #e5e7eb;border-radius:10px;padding:6px 10px;background:#fff;font:800 12px system-ui">Ping</button>
+      <button class="btn" id="sbDiagFetch" style="border:1px solid #e5e7eb;border-radius:10px;padding:6px 10px;background:#fff;font:800 12px system-ui">Leer últimos 10</button>
+      <button class="btn" id="sbDiagInsert" style="border:1px solid #10b981;background:#ecfdf5;color:#065f46;border-radius:10px;padding:6px 10px;font:800 12px system-ui">Insertar TEST (hoy)</button>
+      <button class="btn" id="sbDiagDelete" style="border:1px solid #fecaca;background:#fee2e2;color:#7f1d1d;border-radius:10px;padding:6px 10px;font:800 12px system-ui">Borrar TEST</button>
+    </div>
+    <div id="sbDiagOut" style="flex:1;overflow:auto;padding:12px;font:600 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;color:#0f172a;white-space:pre-wrap;background:#fff"></div>
+  </div>
+</div>
+
 </body>
 </html>
 
@@ -4201,5 +4220,73 @@ td .evt-badge{
     else if(sb){ setSBStatus('conectando…', 'warn'); refreshMonthNow(); }
     else { setSBStatus('sin sb', 'err'); }
   }, 800);
+})();
+</script>
+
+<script>
+(function(){
+  const sb = window.__sb;
+  const out = document.getElementById('sbDiagOut');
+  const urlEl = document.getElementById('sbDiagUrl');
+  const bd = document.getElementById('sbDiagBackdrop');
+
+  function log(o, ok=true){
+    const ts = new Date().toLocaleTimeString();
+    const pre = ok ? '✅' : '❌';
+    out.textContent = `[${ts}] ${pre} ${typeof o==='string'?o:JSON.stringify(o,null,2)}\n` + out.textContent;
+  }
+
+  function openDiag(){
+    bd.style.display = 'flex';
+    urlEl.textContent = (window.SUPABASE_URL||'(sin URL)') + '  —  ' + (window.SUPABASE_ANON_KEY? 'anon ✓':'anon ✗');
+  }
+  function closeDiag(){ bd.style.display = 'none'; }
+
+  document.getElementById('btnSBDiag')?.addEventListener('click', openDiag);
+  document.getElementById('sbDiagClose')?.addEventListener('click', closeDiag);
+  bd?.addEventListener('click', (e)=>{ if(e.target===bd) closeDiag(); });
+
+  async function ping(){
+    if(!sb){ log('Cliente SB no inicializado', false); return; }
+    try{
+      const { data, error } = await sb.rpc('pg_sleep', { seconds: 0 }); // quick no-op if available
+      if(error){ log('Ping no-op con error (no pasa nada) → haré select para probar'); }
+      const { data: rows, error: e2, count } = await sb.from('events').select('id', { count: 'exact', head: true });
+      if(e2){ log(e2, false); } else { log(`Conexión OK · ${count??'?' } eventos`); }
+    }catch(err){ log(err, false); }
+  }
+  async function fetch10(){
+    if(!sb){ log('Cliente SB no inicializado', false); return; }
+    try{
+      const { data, error } = await sb.from('events').select('id, dt, rooms, title, tag, created_at').order('created_at', { ascending:false }).limit(10);
+      if(error){ log(error, false); return; }
+      log(data);
+    }catch(err){ log(err, false); }
+  }
+  function isoNoonToday(){
+    const d = new Date(); d.setHours(12,0,0,0); return d.toISOString();
+  }
+  async function insertTest(){
+    if(!sb){ log('Cliente SB no inicializado', false); return; }
+    const payload = { dt: isoNoonToday(), title: 'DIAG-TEST', tag: 'cumpleaños', specs: 'diagnóstico', rooms: ['1211'], created_by: 'diag' };
+    try{
+      const { data, error } = await sb.from('events').insert(payload).select().single();
+      if(error){ log(error, false); return; }
+      log({insertado:data});
+    }catch(err){ log(err, false); }
+  }
+  async function deleteTest(){
+    if(!sb){ log('Cliente SB no inicializado', false); return; }
+    try{
+      const { data, error } = await sb.from('events').delete().ilike('title', 'DIAG-TEST%').select('id, title, created_at').limit(20);
+      if(error){ log(error, false); return; }
+      log({eliminados:data});
+    }catch(err){ log(err, false); }
+  }
+
+  document.getElementById('sbDiagPing')?.addEventListener('click', ping);
+  document.getElementById('sbDiagFetch')?.addEventListener('click', fetch10);
+  document.getElementById('sbDiagInsert')?.addEventListener('click', insertTest);
+  document.getElementById('sbDiagDelete')?.addEventListener('click', deleteTest);
 })();
 </script>
