@@ -1,16 +1,3 @@
-
-<!-- Supabase client -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-// ==== CONFIGURA AQUÍ TUS CLAVES DE SUPABASE ====
-window.SUPABASE_URL = "https://mzjthivwubvvjjsvbhtb.supabase.co";
-window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16anRoaXZ3dWJ2dmpqc3ZiaHRiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY5NjA3MzAsImV4cCI6MjA3MjUzNjczMH0.1wNvnBjhnOLLtpD-JmH1Hytrbo4P6HI6rA5Yv7mWaEs";
-</script>
-
-<style>
-/* Estado deshabilitado visual (genérico) */
-.disabled{ opacity:.45 !important; filter:saturate(.6); cursor:not-allowed !important; pointer-events:auto !important; }
-</style>
 <!doctype html>
 <html lang="es-MX">
 <head>
@@ -788,78 +775,6 @@ td .evt-badge{
 .hist-close{cursor:pointer;font:800 14px system-ui;color:#0f172a}
 </style>
 
-
-<style>
-/* === Usuarios & Roles === */
-.auth-backdrop,.approve-backdrop,.audit-backdrop{
-  position:fixed; inset:0; background:rgba(2,6,23,.55);
-  display:none; align-items:center; justify-content:center; z-index:1200;
-}
-.auth-backdrop.show,.approve-backdrop.show,.audit-backdrop.show{ display:flex; }
-.auth-modal,.approve-modal,.audit-modal{
-  width:min(720px, 96vw); background:#fff; border-radius:16px; box-shadow:0 20px 60px rgba(0,0,0,.35);
-  overflow:hidden; display:flex; flex-direction:column;
-}
-.auth-head,.approve-head,.audit-head{
-  display:flex; align-items:center; justify-content:space-between; gap:10px;
-  padding:12px 16px; border-bottom:1px solid #e5e7eb; background:#f8fafc;
-}
-.auth-title,.approve-title,.audit-title{ font:800 16px system-ui; color:#0f172a; display:flex; align-items:center; gap:10px; }
-.auth-close,.approve-close,.audit-close{ cursor:pointer; font:800 14px system-ui; color:#0f172a; }
-
-.auth-body{ padding:16px; display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-.auth-body .field{ display:flex; flex-direction:column; gap:4px; }
-.auth-body input, .auth-body select{ border:1px solid #e5e7eb; border-radius:10px; padding:8px; font:600 13px system-ui; }
-.auth-actions{ padding:12px 16px; display:flex; gap:10px; border-top:1px solid #e5e7eb; }
-.btn{ padding:8px 10px; border:1px solid #e5e7eb; border-radius:10px; background:#fff; cursor:pointer; font:800 12px system-ui; }
-.btn.primary{ background:#0ea5e9; border-color:#0ea5e9; color:#fff; }
-.btn.warn{ background:#fee2e2; border-color:#fecaca; color:#7f1d1d; }
-
-/* Pending approvals list */
-.approve-body{ padding:12px; max-height:70vh; overflow:auto; }
-.approve-item{ display:grid; grid-template-columns: 1fr 1fr 1fr auto; gap:8px; align-items:center; padding:8px; border-bottom:1px solid #f1f5f9; }
-.approve-item .name{ font:700 13px system-ui; color:#0f172a; }
-.approve-item .meta{ font:600 12px system-ui; color:#334155; }
-.approve-item select{ border:1px solid #e5e7eb; border-radius:8px; padding:6px; font:600 12px system-ui; }
-
-/* Read-only shield */
-/* Greeting on top-right (non-intrusive) */
-#greeting{
-  position:fixed; top:8px; right:8px; z-index:900; background:#f8fafc; border:1px solid #e5e7eb;
-  padding:6px 10px; border-radius:9999px; font:700 12px system-ui; color:#0f172a; display:none;
-}
-#greeting.show{ display:inline-block; }
-</style>
-
-
-<style>
-/* Toast lectura */
-#roToast{
-  position:fixed; top:6px; left:50%; transform:translateX(-50%);
-  background:#111827; color:#fff; font:800 12px system-ui;
-  padding:8px 12px; border-radius:12px; box-shadow:0 6px 20px rgba(0,0,0,.25);
-  opacity:0; pointer-events:none; z-index:1300; transition:opacity .35s ease;
-}
-#roToast.show{ opacity:1; }
-#roToast.hide{ opacity:0; transition:opacity .6s ease; }
-.auth-toggle{ display:flex; gap:8px; align-items:center; }
-.auth-toggle .seg{ padding:6px 10px; border:1px solid #e5e7eb; border-radius:10px; background:#fff; font:800 12px system-ui; cursor:pointer; }
-.auth-toggle .seg.active{ background:#0ea5e9; color:#fff; border-color:#0ea5e9; }
-.auth-body .field select#uAction{ display:none; }
-</style>
-
-
-<style>
-.stat-pill.disabled{ opacity:.45; filter:saturate(.6); cursor:not-allowed; }
-</style>
-
-
-<style>
-#inviteWrap{ display:none; } /* visible solo en modo "Nuevo" */
-#authSubmit[disabled]{ opacity:.5; cursor:not-allowed; }
-#greeting .role{ margin-left:6px; padding:2px 6px; border-radius:9999px; font:800 10px system-ui; background:#e5e7eb; color:#334155; }
-</style>
-
 </head>
 
 <body>
@@ -924,9 +839,6 @@ td .evt-badge{
         </button>
 <button type="button" class="stat-pill" id="btnCalendario">📅 Calendario</button>
 <button type="button" class="stat-pill" id="btnHistorico">🗂 Histórico</button>
-<button type="button" class="stat-pill" id="btnAuth">👤 Usuario</button>
-<button type="button" class="stat-pill" id="btnRegister">🪪 Registrarte</button>
-<button type="button" class="stat-pill" id="btnPendientes" style="display:none">📝 Pendientes</button>
         <button type="button" class="stat-pill stat-reset" id="mReset" title="Restaurar (vaciar tabla)">
           <span>⟲</span><span class="label">Restaurar</span><span class="value">—</span>
         </button>
@@ -3974,875 +3886,138 @@ td .evt-badge{
 </script>
 
 
-<div id="greeting"></div>
-<div id="roToast">Modo consulta — no tienes permiso para editar</div>
-</div>
-
-<!-- Auth Modal -->
-<div class="auth-backdrop" id="authBackdrop" aria-hidden="true">
-  <div class="auth-modal" role="dialog" aria-label="Acceso de Usuario">
-    <div class="auth-head">
-      <div class="auth-title">👤 Acceso de Usuario</div>
-      <div class="auth-close" id="authClose">✕</div>
-    </div>
-    <div class="auth-body">
-      <div class="field"><label>Matrícula (ID)</label><input id="uId" placeholder="Ej. 3072167"></div>
-      <div class="field"><label>Nombre completo</label><input id="uFull" placeholder="Nombre(s) Apellidos"></div>
-      <div class="field"><label>Departamento</label><select id="uDept"><option value="">Selecciona...</option><option>Ama de Llaves</option><option>Recepción</option><option>Mantenimiento</option><option>Eventos</option><option>Ventas</option><option>Sistemas</option><option>Gerencia</option><option>Seguridad</option><option>Otros</option></select></div>
-      <div class="field"><label>Nombre a mostrar</label><input id="uNick" placeholder="Luis (para el saludo)"></div>
-      <div class="field"><label>Clave</label><input id="uKey" type="password" placeholder="Mín. 8 caracteres, 1 mayúscula y 1 número"></div>
-<div class="field" id="inviteWrap"><label>Código de invitación</label><input id="uInvite" placeholder="8-12 caracteres" /></div>
-      <div class="field"><label>Acción</label>
-        <select id="uAction">
-          <option value="login">Ingresar</option>
-          <option value="register">Registrarme (solicitar permiso)</option>
-        </select>
-      </div>
-    </div>
-    <div class="auth-actions"><div class="auth-toggle"><button class="seg" id="segLogin">Acceder</button><button class="seg" id="segRegister">Nuevo</button></div>
-      <button class="btn primary" id="authSubmit">Continuar</button>
-      <button class="btn" id="authClear">Limpiar</button>
-    </div>
-  </div>
-</div>
-
-<!-- Approvals Modal (Admin) -->
-<div class="approve-backdrop" id="approveBackdrop" aria-hidden="true">
-  <div class="approve-modal" role="dialog" aria-label="Pendientes por aprobar">
-    <div class="approve-head">
-      <div class="approve-title">📝 Pendientes por aprobar</div>
-      <div class="approve-close" id="approveClose">✕</div>
-    </div>
-    <div class="approve-body" id="approveList">—</div>
-  </div>
-</div>
-
-
 <script>
-(function(){
-  const USERS_KEY = 'sabana_users_v1';
-  const SESS_KEY  = 'sabana_session_v1';
-  const AUDIT_KEY = 'sabana_audit_v1';
-
-  // ------ helpers ------
-  const $  = (s,root=document)=>root.querySelector(s);
-  const $$ = (s,root=document)=>Array.from(root.querySelectorAll(s));
-  const pad2 = n => String(n).padStart(2,'0');
-  const nowISO = ()=>{
-    const d = new Date();
-    return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
-  };
-  const greet = ()=>{
-    const h = new Date().getHours();
-    if(h<12) return 'Buenos días';
-    if(h<19) return 'Buenas tardes';
-    return 'Buenas noches';
-  };
-  async function sha256(str){
-    if (window.crypto && window.crypto.subtle) {
-      const enc = new TextEncoder().encode(str);
-      const buf = await crypto.subtle.digest('SHA-256', enc);
-      return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
-    } else {
-      // fallback trivial (no-crypto) hash
-      let h=0; for(let i=0;i<str.length;i++){ h=(h<<5)-h+str.charCodeAt(i); h|=0; }
-      return String(h);
-    }
-  }
-
-  function loadUsers(){
-    try{ return JSON.parse(localStorage.getItem(USERS_KEY) || '{"users":{}}'); }catch{ return {"users":{}}; }
-  }
-  function saveUsers(obj){ localStorage.setItem(USERS_KEY, JSON.stringify(obj)); }
-  function loadSession(){ try{ return JSON.parse(localStorage.getItem(SESS_KEY)||'null'); }catch{ return null; } }
-  function saveSession(s){ if(s) localStorage.setItem(SESS_KEY, JSON.stringify(s)); else localStorage.removeItem(SESS_KEY); }
-  function logAudit(action, detail){
-    let arr; try{ arr = JSON.parse(localStorage.getItem(AUDIT_KEY)||'[]'); }catch{ arr=[]; }
-    const s = loadSession();
-    arr.push({ ts: nowISO(), user_id: s?.id || null, user_name: s?.nick || null, action, detail });
-    localStorage.setItem(AUDIT_KEY, JSON.stringify(arr));
-  }
-
-  // seed admin if missing
-  (function seedAdmin(){
-    const data = loadUsers();
-    if(!data.users['3072167']){
-      data.users['3072167'] = {
-        id:'3072167',
-        full:'Luis Hernaldo Juarez Pineda',
-        dept:'Ama de Llaves',
-        nick:'Luis',
-        role:'admin',
-        status:'approved',
-        key_hash:'', // admin can login without key initially; set later
-        created_at: nowISO(),
-        approved_at: nowISO(),
-        approved_by: 'system'
-      };
-      saveUsers(data);
-    }
-  })();
-
-  function isApprovedEditor(){
-    const s = loadSession();
-    return !!(s && (s.role === 'admin' || s.role === 'editor'));
-  }
-  window.sabanaCanEdit = isApprovedEditor;
-
-  function updateGreeting(){
-    const s = loadSession();
-    const el = $('#greeting');
-    if(!s){ el.classList.remove('show'); return; }
-    el.textContent = `${greet()}, ${s.nick||s.full||s.id}`;
-    el.classList.add('show');
-    // show pending button if admin
-    const pend = $('#btnPendientes');
-    if(pend) pend.style.display = (s.role==='admin') ? 'inline-block' : 'none';
-    // read-only shield
-    const shield = $('async function doRegister({id,full,dept,nick,key}){
-    id=String(id||'').trim();
-    const data = loadUsers();
-    if(!id || data.users[id]){ alert('Matrícula vacía o ya registrada.'); return; }
-    if(!full || !dept || !nick){ alert('Completa nombre, departamento y nombre a mostrar.'); return; }
-    if(!key || key.length<6 || !/\d/.test(key)){ alert('Clave inválida (mín. 6 y al menos 1 número).'); return; }
-    const key_hash = await sha256(key);
-    data.users[id] = {
-      id, full, dept, nick, key_hash,
-      role:'viewer',
-      status:'pending',
-      created_at: nowISO()
-    };
-    saveUsers(data);
-    logAudit('register_request', {id, full, dept, nick});
-    alert('Solicitud enviada. Un administrador debe aprobar tu acceso de edición.');
-  }
-
-  async function doLogin({id,key}){
-    id=String(id||'').trim();
-    const data = loadUsers();
-    const u = data.users[id];
-    if(!u){ alert('Usuario no encontrado.'); return; }
-    if(u.key_hash){
-      const key_hash = await sha256(key||'');
-      if(key_hash !== u.key_hash){ alert('Clave incorrecta.'); return; }
-    }
-    if(u.status!=='approved'){
-      saveSession({ id:u.id, full:u.full, nick:u.nick, role:'viewer' });
-      updateGreeting();
-      alert('Tu cuenta está pendiente o solo tiene permiso de consulta.');
-      return;
-    }
-    saveSession({ id:u.id, full:u.full, nick:u.nick, role:u.role });
-    updateGreeting();
-    logAudit('login', {id:u.id});
-  }
-
-  function openAuth(){ $('#authBackdrop')?.classList.add('show'); }
-  function closeAuth(){ $('#authBackdrop')?.classList.remove('show'); }
-
-  // approvals UI
-  function openApprove(){
-    const s = loadSession(); if(!s || s.role!=='admin'){ return; }
-    const list = $('#approveList'); list.innerHTML='';
-    const data = loadUsers();
-    const pend = Object.values(data.users).filter(u => u.status==='pending');
-    if(!pend.length){ list.textContent = 'No hay solicitudes pendientes.'; }
-    else{
-      pend.forEach(u=>{
-        const row = document.createElement('div');
-        row.className='approve-item';
-        row.innerHTML = `
-          <div class="name">${u.full}</div>
-          <div class="meta">ID: ${u.id}</div>
-          <div class="meta">${u.dept}</div>
-          <div class="actions">
-            <select data-role>
-              <option value="editor" selected>Editor</option>
-              <option value="viewer">Solo lectura</option>
-            </select>
-            <button class="btn primary" data-approve>Aprobar</button>
-            <button class="btn warn" data-reject>Rechazar</button>
-          </div>
-        `;
-        row.querySelector('[data-approve]').addEventListener('click', ()=>{
-          const role = row.querySelector('[data-role]').value;
-          u.status='approved'; u.role=role; u.approved_at=nowISO(); u.approved_by=s.id;
-          data.users[u.id]=u; saveUsers(data); logAudit('approve_user', {id:u.id, role});
-          openApprove(); // refresh
-        });
-        row.querySelector('[data-reject]').addEventListener('click', ()=>{
-          u.status='rejected'; data.users[u.id]=u; saveUsers(data); logAudit('reject_user', {id:u.id});
-          openApprove();
-        });
-        list.appendChild(row);
-      });
-    }
-    $('#approveBackdrop')?.classList.add('show');
-  }
-  function closeApprove(){ $('#approveBackdrop')?.classList.remove('show'); }
-
-  // wire UI
-  (function(){
-    $('#btnAuth')?.addEventListener('click', openAuth);
-    $('#authClose')?.addEventListener('click', closeAuth);
-    $('#authClear')?.addEventListener('click', ()=>{
-      ['uId','uFull','uDept','uNick','uKey'].forEach(id=>{ const el=$('#'+id); if(el) el.value=''; });
-    });
-    $('#authSubmit')?.addEventListener('click', async ()=>{
-      const id=$('#uId').value, full=$('#uFull').value, dept=$('#uDept').value, nick=$('#uNick').value, key=$('#uKey').value;
-      const action=$('#uAction').value;
-      if(action==='register'){ await doRegister({id,full,dept,nick,key}); }
-      else { await doLogin({id,key}); closeAuth(); }
-    });
-
-    $('#btnPendientes')?.addEventListener('click', openApprove);
-    $('#approveClose')?.addEventListener('click', closeApprove);
-    $('#approveBackdrop')?.addEventListener('click', (e)=>{ if(e.target.id==='approveBackdrop') closeApprove(); });
-
-    // greeting/session on load
-    updateGreeting();
-  })();
-
-  // ---- Enforcement: block edits if not approved editor ----
-  document.addEventListener('click', (ev)=>{
-    const t = ev.target;
-    // 1) Botón "Agregar" del modal de Eventos
-    if(t && t.tagName==='BUTTON' && /agregar/i.test((t.textContent||'').trim())){
-      if(!isApprovedEditor()){
-        ev.stopImmediatePropagation(); ev.preventDefault();
-        alert('No tienes permiso para agregar/modificar. Solicita aprobación.');
-      } else {
-        logAudit('add_from_modal', {source:'eventos_modal'});
-      }
-    }
-    // 2) Botón "Agregar" del Calendario (id calAdd)
-    if(t && t.id==='calAdd'){
-      if(!isApprovedEditor()){
-        ev.stopImmediatePropagation(); ev.preventDefault();
-        alert('No tienes permiso para agregar/modificar. Solicita aprobación.');
-      } else {
-        logAudit('add_from_calendar', {source:'cal'});
-      }
-    }
-  }, true);
-
-  // show read-only shield if viewer/pending
-  (function(){
-    const shield = document.getElementById('roShield');
-    if(shield) shield.classList.toggle('show', !isApprovedEditor());
-  })();
-
-  // expose audit for future
-  window.sabanaAuditLog = function(){ try{ return JSON.parse(localStorage.getItem(AUDIT_KEY)||'[]'); }catch{return [];} };
-
-})();
-</script>
-
-</body>
-</html>
-
-<script>
-(function(){
-  // Extend existing script by appending helpers for toast + toggles
-  const isEditor = window.sabanaCanEdit ? window.sabanaCanEdit() : false;
-
-  function showToast(msg){
-    const t = document.getElementById('roToast');
-    if(!t) return;
-    t.textContent = msg || 'Modo consulta — no tienes permiso para editar';
-    t.classList.add('show');
-    t.classList.remove('hide');
-    clearTimeout(window.__roToastTimer);
-    window.__roToastTimer = setTimeout(()=>{
-      t.classList.add('hide');
-      setTimeout(()=>{ t.classList.remove('show'); }, 650);
-    }, 1500);
-  }
-
-  // Global click/touch -> show toast if viewer/pending
-  function guardTap(e){
-    if (typeof window.sabanaCanEdit === 'function' && !window.sabanaCanEdit()) {
-      showToast('Modo consulta — no tienes permiso para editar');
-    }
-  }
-  document.addEventListener('click', guardTap, true);
-  document.addEventListener('touchstart', guardTap, {passive:true, capture:true});
-
-  // Wire "Registrarte" button
-  const btnReg = document.getElementById('btnRegister');
-  if(btnReg){
-    btnReg.addEventListener('click', ()=>{
-      document.getElementById('authBackdrop')?.classList.add('show');
-      // set register mode
-      const sel = document.getElementById('uAction'); if(sel){ sel.value='register'; }
-      document.getElementById('segRegister')?.classList.add('active');
-      document.getElementById('segLogin')?.classList.remove('active');
-    });
-  }
-
-  // Segmented control inside modal
-  const segLogin = document.getElementById('segLogin');
-  const segReg   = document.getElementById('segRegister');
-  if(segLogin){
-    segLogin.addEventListener('click', ()=>{
-      const sel = document.getElementById('uAction'); if(sel){ sel.value='login'; }
-      segLogin.classList.add('active'); segReg?.classList.remove('active');
-    });
-  }
-  if(segReg){
-    segReg.addEventListener('click', ()=>{
-      const sel = document.getElementById('uAction'); if(sel){ sel.value='register'; }
-      segReg.classList.add('active'); segLogin?.classList.remove('active');
-    });
-  }
-
-  // On open auth via "Usuario" keep previous behavior but default to login
-  const btnAuth = document.getElementById('btnAuth');
-  if(btnAuth){
-    btnAuth.addEventListener('click', ()=>{
-      document.getElementById('segLogin')?.classList.add('active');
-      document.getElementById('segRegister')?.classList.remove('active');
-      const sel = document.getElementById('uAction'); if(sel){ sel.value='login'; }
-    });
-  }
-
-  // Replace blocking alerts with toast in enforcement hook (if present)
-  document.addEventListener('click', (ev)=>{
-    const t = ev.target;
-    if(t && t.tagName==='BUTTON' && /agregar/i.test((t.textContent||'').trim())){
-      if(typeof window.sabanaCanEdit==='function' && !window.sabanaCanEdit()){
-        ev.stopImmediatePropagation(); ev.preventDefault();
-        showToast('Solo visualización. Solicita aprobación.');
-      }
-    }
-    if(t && t.id==='calAdd'){
-      if(typeof window.sabanaCanEdit==='function' && !window.sabanaCanEdit()){
-        ev.stopImmediatePropagation(); ev.preventDefault();
-        showToast('Solo visualización. Solicita aprobación.');
-      }
-    }
-  }, true);
-
-})(); 
-</script>
-
-<script>
-(function(){
-  // Helpers already exist in previous scripts; we just add guest UI behavior
-  function isLogged(){ try{ return JSON.parse(localStorage.getItem('sabana_session_v1')||'null'); }catch{return null;} }
-  function applyGuestModeUI(){
-    const guest = !isLogged();
-    const btnAuth = document.getElementById('btnAuth');
-    const btnPend = document.getElementById('btnPendientes');
-    if (guest){
-      if(btnAuth) btnAuth.style.display = 'none';
-      if(btnPend) btnPend.style.display = 'none';
-    } else {
-      if(btnAuth) btnAuth.style.display = 'inline-block';
-    }
-    // disable all stat-pills except Registrarte when guest
-    document.querySelectorAll('.stat-pill').forEach(p => {
-      if (p.id === 'btnRegister') {
-        p.classList.remove('disabled');
-        p.removeAttribute('aria-disabled');
-      } else {
-        p.classList.toggle('disabled', guest);
-        p.setAttribute('aria-disabled', guest ? 'true' : 'false');
-      }
-    });
-  }
-
-  // Intercept clicks on disabled stat-pills to show toast and not perform action
-  document.addEventListener('click', (e)=>{
-    const pill = e.target.closest && e.target.closest('.stat-pill');
-    if (pill && pill.classList.contains('disabled')){
-      e.preventDefault(); e.stopImmediatePropagation();
-      if (typeof showToast === 'function') showToast('Solo “Registrarte” está disponible sin sesión.');
-    }
-  }, true);
-
-  // Ensure Registrarte opens modal in register mode even in guest
-  function openRegister(){
-    const bd = document.getElementById('authBackdrop');
-    if (bd) bd.classList.add('show');
-    const sel = document.getElementById('uAction'); if(sel) sel.value='register';
-    const segL = document.getElementById('segLogin'); const segR = document.getElementById('segRegister');
-    segR && segR.classList.add('active'); segL && segL.classList.remove('active');
-  }
-  const btnReg = document.getElementById('btnRegister');
-  if (btnReg){
-    btnReg.addEventListener('click', (ev)=>{ ev.preventDefault(); openRegister(); }, true);
-  }
-
-  // Apply on load
-  document.addEventListener('DOMContentLoaded', applyGuestModeUI);
-  if (document.readyState === 'complete' || document.readyState === 'interactive') applyGuestModeUI();
-})();
-</script>
-
-<script>
-(function(){
-  const USERS_KEY = 'sabana_users_v1';
-  const SESS_KEY  = 'sabana_session_v1';
-  const AUDIT_KEY = 'sabana_audit_v1';
-  const INV_KEY   = 'sabana_invites_v1';
-  const RL_KEY    = 'sabana_reg_rate_v1';
-
-  const $  = (s,root=document)=>root.querySelector(s);
-  const $$ = (s,root=document)=>Array.from(root.querySelectorAll(s));
-  const pad2 = n => String(n).padStart(2,'0');
-  const nowISO = ()=>{ const d=new Date(); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`; };
-
-  // --- Invite store ---
-  function loadInv(){ try{ return JSON.parse(localStorage.getItem(INV_KEY)||'{"codes":{}}'); }catch{return {"codes":{}};} }
-  function saveInv(obj){ localStorage.setItem(INV_KEY, JSON.stringify(obj)); }
-
-  // Seed invite store if missing
-  (function seedInv(){ const inv=loadInv(); if(!inv.codes) inv.codes={}; saveInv(inv); })();
-
-  // Utilities
-  function showInviteField(show){
-    const wrap = $('#inviteWrap');
-    if(wrap) wrap.style.display = show ? 'block' : 'none';
-  }
-  function setContinueEnabled(on){
-    const btn = $('#authSubmit'); if(btn){ btn.disabled = !on; }
-  }
-
-  // Strong validators
-  function validId(v){ return /^\d{6,10}$/.test(String(v||'').trim()); }
-  function validDept(v){ return !!v && v !== 'Selecciona...'; }
-  function validNick(v){ return String(v||'').trim().length >= 2; }
-  function strongPass(v){
-    return /[A-Z]/.test(v) && /[0-9]/.test(v) && String(v||'').length >= 8;
-  }
-  function validInvite(code){
-    const inv = loadInv();
-    const c = (inv.codes||{})[String(code||'').trim()];
-    if(!c) return false;
-    // expiry & uses
-    const exp = new Date(c.expires_at);
-    if (isNaN(exp) || exp < new Date()) return false;
-    return (c.uses_left||0) > 0;
-  }
-  function consumeInvite(code, used_by){
-    const inv = loadInv();
-    const c = (inv.codes||{})[String(code||'').trim()];
-    if(!c) return false;
-    c.uses_left = Math.max(0, (c.uses_left||0)-1);
-    c.last_used_by = used_by; c.last_used_at = nowISO();
-    inv.codes[String(code).trim()] = c;
-    saveInv(inv);
-    return true;
-  }
-  function generateInvite(created_by){
-    const inv = loadInv();
-    const code = Math.random().toString(36).slice(2,10).toUpperCase();
-    const exp = new Date(); exp.setDate(exp.getDate()+7);
-    inv.codes[code] = {
-      code,
-      created_by,
-      created_at: nowISO(),
-      expires_at: exp.toISOString(),
-      uses_left: 1
-    };
-    saveInv(inv);
-    return code;
-  }
-
-  // Rate limit (3 registrations/day per dispositivo)
-  function canRegisterNow(){
-    let obj; try{ obj = JSON.parse(localStorage.getItem(RL_KEY)||'{}'); }catch{ obj = {}; }
-    const today = new Date().toISOString().slice(0,10);
-    if(obj.date !== today){ obj = { date: today, count: 0 }; }
-    if(obj.count >= 3) return false;
-    obj.count++; localStorage.setItem(RL_KEY, JSON.stringify(obj));
-    return true;
-  }
-
-  // Rewrite handlers for segmented toggle to show invite & disable Continue when invalid
-  (function wireSeg(){
-    const segL = document.getElementById('segLogin');
-    const segR = document.getElementById('segRegister');
-    const sel = document.getElementById('uAction');
-    function toLogin(){
-      sel && (sel.value='login'); segL && segL.classList.add('active'); segR && segR.classList.remove('active'); showInviteField(false); setContinueEnabled(true);
-    }
-    function toRegister(){
-      sel && (sel.value='register'); segR && segR.classList.add('active'); segL && segL.classList.remove('active'); showInviteField(true); setContinueEnabled(false);
-    }
-    segL && segL.addEventListener('click', toLogin);
-    segR && segR.addEventListener('click', toRegister);
-
-    // Default when opening via 'Registrarte' (already set elsewhere), ensure field visible
-    document.getElementById('btnRegister')?.addEventListener('click', toRegister);
-    // Default when opening via 'Usuario': login
-    document.getElementById('btnAuth')?.addEventListener('click', toLogin);
-
-    // Live validation for register path
-    ['uId','uFull','uDept','uNick','uKey','uInvite'].forEach(id=>{
-      const el = document.getElementById(id);
-      el && el.addEventListener('input', ()=>{
-        if((sel && sel.value)!=='register'){ setContinueEnabled(true); return; }
-        const ok = validId($('#uId').value) && validDept($('#uDept').value) && validNick($('#uNick').value) && strongPass($('#uKey').value) && validInvite($('#uInvite').value);
-        setContinueEnabled(ok);
-      });
-    });
-  })();
-
-  // Extend doRegister/doLogin if they exist (declared earlier). We override global functions safely.
-  const _doRegister = window.doRegister;
-  const _doLogin    = window.doLogin;
-  window.doRegister = async function(payload){
-    // enforce rate limit
-    if(!canRegisterNow()){ alert('Has alcanzado el límite de registros desde este dispositivo hoy.'); return; }
-    // enforce strong policy and invite
-    const id = String(payload.id||'').trim();
-    const dept = (payload.dept||'').trim();
-    const nick = (payload.nick||'').trim();
-    const pass = String(payload.key||'');
-    const invite = String($('#uInvite')?.value||'').trim();
-
-    if(!validId(id)){ alert('Matrícula inválida (6-10 dígitos).'); return; }
-    if(!validDept(dept)){ alert('Selecciona un departamento.'); return; }
-    if(!validNick(nick)){ alert('Nombre a mostrar muy corto.'); return; }
-    if(!strongPass(pass)){ alert('Clave insegura. Requiere 8+, mayúscula y número.'); return; }
-    if(!validInvite(invite)){ alert('Código de invitación inválido o vencido.'); return; }
-
-    // Consume invite
-    consumeInvite(invite, id);
-
-    // Proceed with original register (which writes users store and audit)
-    if(typeof _doRegister === 'function'){
-      return await _doRegister(payload);
-    }
-  };
-
-  window.doLogin = async function(payload){
-    const res = _doLogin ? await _doLogin(payload) : null;
-    // Enhance greeting with role badge
-    try{
-      const s = JSON.parse(localStorage.getItem(SESS_KEY)||'null');
-      const greet = document.getElementById('greeting');
-      if (s && greet){
-        const role = s.role || 'viewer';
-        if(!greet.querySelector('.role')){
-          const span = document.createElement('span');
-          span.className='role';
-          span.textContent = role.toUpperCase();
-          greet.appendChild(span);
-        } else {
-          greet.querySelector('.role').textContent = role.toUpperCase();
-        }
-      }
-    }catch{}
-    return res;
-  };
-
-  // Add invites panel to Approvals modal: generate & revoke
-  const oldOpenApprove = window.openApprove;
-  window.openApprove = function(){
-    if(typeof oldOpenApprove === 'function') oldOpenApprove();
-    // Append invites panel
-    const list = document.getElementById('approveList');
-    if(!list) return;
-    const wrap = document.createElement('div');
-    wrap.style.marginTop = '12px';
-    const inv = loadInv();
-    const rows = Object.values(inv.codes||{}).sort((a,b)=> (a.expires_at>b.expires_at?-1:1));
-    wrap.innerHTML = `
-      <hr style="margin:8px 0;border:none;border-top:1px solid #e5e7eb">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin:4px 0">
-        <div style="font:800 14px system-ui;color:#0f172a;display:flex;align-items:center;gap:8px">🔐 Invitaciones</div>
-        <div><button class="btn" id="btnNewInvite">Nueva invitación</button></div>
-      </div>
-      <div id="inviteTable" style="max-height:200px;overflow:auto"></div>
-    `;
-    list.appendChild(wrap);
-    function renderInv(){
-      const inv = loadInv();
-      const rows = Object.values(inv.codes||{}).sort((a,b)=> (a.created_at<b.created_at?1:-1));
-      const tbl = document.getElementById('inviteTable');
-      if(!tbl) return;
-      if(!rows.length){ tbl.innerHTML = '<div class="muted">No hay invitaciones generadas.</div>'; return; }
-      tbl.innerHTML = rows.map(c=>`
-        <div style="display:grid;grid-template-columns: 1fr 1fr 1fr auto;gap:6px;align-items:center;padding:6px;border-bottom:1px solid #f1f5f9">
-          <div style="font:800 12px system-ui;color:#111827">Código: ${c.code}</div>
-          <div style="font:600 12px system-ui;color:#334155">Vence: ${new Date(c.expires_at).toLocaleString()}</div>
-          <div style="font:600 12px system-ui;color:#334155">Usos: ${c.uses_left}</div>
-          <div><button class="btn warn" data-revoke="${c.code}">Revocar</button></div>
-        </div>
-      `).join('');
-      // bind revoke
-      tbl.querySelectorAll('[data-revoke]').forEach(b=>{
-        b.addEventListener('click', ()=>{
-          const inv = loadInv(); delete inv.codes[b.getAttribute('data-revoke')]; saveInv(inv); renderInv();
-        });
-      });
-    }
-    renderInv();
-    document.getElementById('btnNewInvite')?.addEventListener('click', ()=>{
-      const s = JSON.parse(localStorage.getItem(SESS_KEY)||'null');
-      const code = generateInvite(s?.id || 'admin');
-      alert('Invitación creada: ' + code + '\\n(1 uso, vence en 7 días)');
-      renderInv();
-    });
-  };
-
-  // Hard keydown guard for non-editors (blocks edits even por teclado)
-  document.addEventListener('keydown', (e)=>{
-    if (typeof window.sabanaCanEdit === 'function' && !window.sabanaCanEdit()){
-      const blocked = ['Backspace','Delete','Enter'];
-      const isChar = e.key && e.key.length === 1;
-      if (blocked.includes(e.key) || isChar){
-        e.preventDefault();
-        if (typeof showToast === 'function') showToast('Solo visualización. Inicia sesión y solicita aprobación.');
-      }
-    }
-  }, true);
-
-  // If greeting already visible, append role badge
-  (function attachRoleBadge(){
-    try{
-      const s = JSON.parse(localStorage.getItem(SESS_KEY)||'null');
-      const greet = document.getElementById('greeting');
-      if (s && greet){
-        const span = document.createElement('span');
-        span.className='role'; span.textContent = (s.role||'viewer').toUpperCase();
-        greet.appendChild(span);
-      }
-    }catch{}
-  })();
-
-})(); 
-</script>
-
-<script>
-(function(){
-  // Utility to get current session
-  function isLogged(){ try{ return JSON.parse(localStorage.getItem('sabana_session_v1')||'null'); }catch{return null;} }
-
-  // Disable list of buttons by visible text
-  const RESTRICT_TEXTS = ['salidas','llegadas','ocupadas','fuera de servicio','show room'];
-
-  function applyGuestRestrictions(){
-    const guest = !isLogged();
-    // Keep Registrarte enabled
-    const allowIds = new Set(['btnRegister']);
-    // Pills to consider (buttons and elements with role=button)
-    const allBtns = Array.from(document.querySelectorAll('button, [role="button"]'));
-    allBtns.forEach(btn => {
-      const label = (btn.textContent || '').trim().toLowerCase();
-      const isRestrictedByText = RESTRICT_TEXTS.some(w => label.includes(w));
-      const isStat = btn.classList.contains('stat-pill');
-      const isRegister = btn.id === 'btnRegister';
-      const shouldDisable = guest && (isRegister ? false : (isRestrictedByText || isStat));
-      btn.classList.toggle('disabled', !!shouldDisable);
-      btn.setAttribute('aria-disabled', shouldDisable ? 'true' : 'false');
-    });
-  }
-
-  // Intercept clicks on any .disabled control to show toast and block action
-  function onDisabledClick(e){
-    const el = e.target.closest && e.target.closest('.disabled');
-    if(el){
-      e.preventDefault(); e.stopImmediatePropagation();
-      if (typeof showToast === 'function') showToast('Disponible al iniciar sesión.');
-    }
-  }
-  document.addEventListener('click', onDisabledClick, true);
-  document.addEventListener('touchstart', onDisabledClick, {passive:true, capture:true});
-
-  // Apply on load and after small delay to catch any late DOM
-  function initGuest(){
-    applyGuestRestrictions();
-    setTimeout(applyGuestRestrictions, 300);
-  }
-  document.addEventListener('DOMContentLoaded', initGuest);
-  if(document.readyState === 'complete' || document.readyState === 'interactive'){ initGuest(); }
-
-  // Also re-apply when greeting is updated (simple hook)
-  const mo = new MutationObserver(()=>applyGuestRestrictions());
-  const greet = document.getElementById('greeting');
-  if(greet) mo.observe(greet, { childList: true, subtree: true });
-
-})();
-</script>
-
-<script>
-// ===== Supabase Realtime Sync (Eventos) =====
+/**
+ * Sincronización en tiempo real con Supabase para la tabla public.events
+ * - Carga el mes actual al abrir/abrir calendario
+ * - Suscribe a INSERT/UPDATE/DELETE (WebSocket)
+ * - Captura eventos agregados localmente (localStorage 'sabana_eventos_v1' sin id)
+ *   y los sube a Supabase automáticamente (les pone id) para que todos los devices los vean.
+ */
 (function(){
   const KEY_EVENTS = 'sabana_eventos_v1';
-
-  // Create client if configured
   const hasCfg = !!(window.SUPABASE_URL && window.SUPABASE_ANON_KEY && window.SUPABASE_URL.includes('supabase.co'));
   const sb = (window.supabase && hasCfg) ? window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY) : null;
   window.__sb = sb; // debug
 
   const pad2=n=>String(n).padStart(2,'0');
-  const toISO=(d)=>`${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
-  function loadLocal(){ try{ return JSON.parse(localStorage.getItem(KEY_EVENTS)||'[]'); }catch{return []} }
-  function saveLocal(arr){ localStorage.setItem(KEY_EVENTS, JSON.stringify(arr||[])); }
-  function repaint(){ if(typeof window.repaintEventBadgesToday==='function') window.repaintEventBadgesToday(); }
-
-  async function fetchRange(from, to){
-    if(!sb) return;
-    try{
-      const { data, error } = await sb.from('events')
-        .select('*')
-        .gte('dt', from.toISOString())
-        .lt('dt', to.toISOString())
-        .order('dt', { ascending: true });
-      if(error){ console.warn('SB fetch error', error); return; }
-      // merge with local, replacing same id or same (dt,rooms,title)
-      const local = loadLocal();
-      const byId = new Map(local.filter(e=>e.id).map(e=>[e.id, e]));
-      const nonId = local.filter(e=>!e.id);
-      const merged = data.map(row => ({
-        id: row.id, dt: row.dt, title: row.title, tag: row.tag, specs: row.specs,
-        rooms: row.rooms || [], created_by: row.created_by
-      }));
-      // keep any local events outside range
-      const outOfRange = local.filter(e=>{
-        const d = e.dt? new Date(e.dt) : null;
-        if(!d) return true;
-        return d < from || d >= to;
-      });
-      saveLocal([...outOfRange, ...merged]);
-      repaint();
-    }catch(err){ console.error(err); }
-  }
-
   function monthBounds(d){
     const from = new Date(d.getFullYear(), d.getMonth(), 1, 0,0,0);
     const to   = new Date(d.getFullYear(), d.getMonth()+1, 1, 0,0,0);
     return {from, to};
   }
-  function todayBounds(){
-    const now = new Date(); const from = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0,0,0);
-    const to = new Date(now.getFullYear(), now.getMonth(), now.getDate()+1, 0,0,0);
-    return {from, to};
+  function repaint(){
+    if(typeof window.repaintEventBadgesToday==='function'){ window.repaintEventBadgesToday(); }
+  }
+  function loadLocal(){
+    try{ return JSON.parse(localStorage.getItem(KEY_EVENTS)||'[]'); }catch{ return []; }
+  }
+  function saveLocal(arr){
+    localStorage.setItem(KEY_EVENTS, JSON.stringify(arr||[]));
   }
 
-  // Subscribe realtime to events
+  // === Merge remoto → local, por id ===
+  function mergeRemoteIntoLocal(rows, {preserveOutside=true}={}){
+    const local = loadLocal();
+    const map = new Map(local.map(e=>[e.id||`${e.dt}|${(e.rooms||[]).join(',')}|${e.title||''}|${e.tag||''}|${e.specs||''}`, e]));
+    rows.forEach(r=>{
+      const k = r.id || `${r.dt}|${(r.rooms||[]).join(',')}|${r.title||''}|${r.tag||''}|${r.specs||''}`;
+      map.set(k, { id:r.id, dt:r.dt, title:r.title, tag:r.tag, specs:r.specs, rooms:r.rooms||[], created_by:r.created_by });
+    });
+    const merged = Array.from(map.values());
+    saveLocal(merged);
+    repaint();
+  }
+
+  async function fetchMonth(d=new Date()){
+    if(!sb) return;
+    const {from, to} = monthBounds(d);
+    try{
+      const { data, error } = await sb.from('events')
+        .select('*')
+        .gte('dt', from.toISOString())
+        .lt('dt', to.toISOString())
+        .order('dt', { ascending:true });
+      if(error){ console.warn('Supabase fetch error', error); return; }
+      mergeRemoteIntoLocal(data);
+    }catch(e){ console.error(e); }
+  }
+
+  // === Subir locales (sin id) → Supabase y asignar id ===
+  let pushing = false;
+  async function pushNewLocalToSupabase(){
+    if(!sb || pushing) return;
+    const arr = loadLocal();
+    const pending = arr.filter(e => !e.id && e.dt && (e.rooms||[]).length);
+    if(!pending.length) return;
+    pushing = true;
+    try{
+      for(const e of pending){
+        const payload = {
+          dt: e.dt,
+          title: e.title || null,
+          tag: e.tag || null,
+          specs: e.specs || null,
+          rooms: e.rooms || [],
+          created_by: (function(){ try{ return JSON.parse(localStorage.getItem('sabana_session_v1')||'null')?.id || null; }catch{return null;} })()
+        };
+        const { data, error } = await sb.from('events').insert(payload).select().single();
+        if(!error && data){
+          // asignar id en local y guardar
+          const cur = loadLocal();
+          const idx = cur.findIndex(x => x===e || (!x.id && x.dt===e.dt && (x.title||'')===(e.title||'') && (x.tag||'')===(e.tag||'') && (x.specs||'')===(e.specs||'') && JSON.stringify(x.rooms||[])===JSON.stringify(e.rooms||[])));
+          if(idx>=0){ cur[idx] = Object.assign({}, e, { id: data.id }); saveLocal(cur); }
+        }else if(error){ console.warn('Supabase insert error', error); }
+      }
+    }catch(err){ console.error(err); }
+    finally{ pushing = false; }
+  }
+
+  // === Realtime ===
   function subscribeRealtime(){
     if(!sb) return;
     try{
       const ch = sb.channel('events_rt')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, payload => {
-          // Merge change
-          const arr = loadLocal();
-          if(payload.eventType === 'INSERT' || payload.eventType === 'UPDATE'){
+        .on('postgres_changes', { event:'*', schema:'public', table:'events' }, payload => {
+          if(payload.eventType === 'INSERT' || payload.eventType==='UPDATE'){
             const r = payload.new;
-            const e = { id:r.id, dt:r.dt, title:r.title, tag:r.tag, specs:r.specs, rooms:r.rooms||[], created_by:r.created_by };
-            const idx = arr.findIndex(x=>x.id===e.id);
-            if(idx>=0) arr[idx]=e; else arr.push(e);
-            saveLocal(arr);
-            repaint();
-          } else if(payload.eventType === 'DELETE'){
+            mergeRemoteIntoLocal([r]);
+          }else if(payload.eventType === 'DELETE'){
             const id = payload.old?.id;
             if(id){
-              const arr2 = arr.filter(x=>x.id!==id);
-              saveLocal(arr2); repaint();
+              const cur = loadLocal().filter(x=>x.id!==id);
+              saveLocal(cur); repaint();
             }
           }
         })
-        .subscribe((status)=>{ /* console.log('RT status', status); */ });
+        .subscribe();
       window.__sbEventsCh = ch;
     }catch(e){ console.warn('SB subscribe error', e); }
   }
 
-  // Intercept "Agregar" from Modal/Calendario and push to Supabase as source of truth
-  async function pushEventToSupabase(e){
-    if(!sb) return false;
-    try{
-      const sess = JSON.parse(localStorage.getItem('sabana_session_v1')||'null');
-      const payload = { dt:e.dt, title:e.title||null, tag:e.tag||null, specs:e.specs||null, rooms:e.rooms||[], created_by: sess?.id || null };
-      const { data, error } = await sb.from('events').insert(payload).select().single();
-      if(error){ console.warn('SB insert error', error); return false; }
-      // local update happens via realtime; for immediate reflect, we can merge:
-      const arr = loadLocal(); arr.push({ ...payload, id:data.id }); saveLocal(arr); repaint();
-      return true;
-    }catch(err){ console.error(err); return false; }
-  }
-
-  // Hook existing "Agregar" listeners: listen globally and if success in SB, skip duplicate local save (no-op)
-  document.addEventListener('sabana:add-event', async (ev)=>{
-    const ok = await pushEventToSupabase(ev.detail);
-    // nothing else; realtime will sync across devices
-  });
-
-  // Emit custom event from our previous capture handlers
-  document.addEventListener('click', async (ev)=>{
-    const t = ev.target;
-    if(!t || t.tagName!=='BUTTON') return;
-    const txt = (t.textContent||'').trim().toLowerCase();
-    const isCal = t.id==='calAdd';
-    if(txt==='agregar' || isCal){
-      // Extract from modal/calendar fields (best-effort; same selectors as antes)
-      const scope = isCal ? document : (Array.from(document.querySelectorAll('.modal,[role="dialog"],.modal-eventos')).find(m => /gestionar\s+eventos/i.test(m.textContent||'')) || document);
-      const q = s => scope.querySelector(s);
-      const inTitle = isCal ? document.getElementById('calTitle') : (q('input[placeholder*="Cumple"]') || q('#evtTitle') || q('#evtType'));
-      const inFecha = isCal ? { value: (function(){ const sel = window.__calSelDate; if(sel){ return `${sel.getDate()}/${pad2(sel.getMonth()+1)}/${sel.getFullYear()}` } return ''; })() } : (q('input[type="datetime-local"]') || q('input[placeholder^="dd/"]') || q('#evtDate'));
-      const inHora  = isCal ? document.getElementById('calTime') : (q('input[type="time"]') || q('#evtTime'));
-      const inRooms = isCal ? document.getElementById('calRooms') : (q('input[placeholder*="coma/espacio"]') || q('input[placeholder*="Habitación"]') || q('#evtRoom'));
-      const inTag   = isCal ? document.getElementById('calTag') : (q('input[placeholder*="Etiqueta"]') || q('input[placeholder*="luna de miel"]') || q('#evtTag'));
-      const inNotas = isCal ? document.getElementById('calSpecs') : (scope.querySelector('textarea') || q('#evtNotas'));
-      function parseFecha(val,hora){
-        let m = String(val||'').match(/^\s*(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/);
-        if(m){ const dd=pad2(m[1]), mm=pad2(m[2]), yyyy=m[3]; const time = hora && /\d\d:\d\d/.test(hora) ? `T${hora}`:''; return `${yyyy}-${mm}-${dd}${time}`; }
-        m = String(val||'').match(/^(\d{4})-(\d{2})-(\d{2})/); if(m){ const time = hora && /\d\d:\d\d/.test(hora)?`T${hora}`:''; return `${m[1]}-${m[2]}-${m[3]}${time}`; }
-        return null;
-      }
-      const rooms = (inRooms?.value||'').replace(/\n/g,' ').split(/[\s,;]+/).map(s=>s.trim()).filter(Boolean);
-      const dt = parseFecha(inFecha?.value, inHora?.value);
-      const title = inTitle?.value||''; const tag = inTag?.value||''; const specs = inNotas?.value||'';
-      if(sb && rooms.length && dt){
-        const ok = await pushEventToSupabase({ dt, rooms, title, tag, specs });
-        // prevent double local insert: rely on realtime
-      }
+  // === Detectar cambios locales y subir (cuando alguien agregue desde el modal existente) ===
+  let lastJSON = null;
+  setInterval(()=>{
+    const curJSON = localStorage.getItem(KEY_EVENTS) || '[]';
+    if(curJSON !== lastJSON){
+      lastJSON = curJSON;
+      pushNewLocalToSupabase();
     }
-  }, true);
+  }, 1200);
 
-  // Calendar hook: fetch month before opening
+  // === Refrescar al abrir Calendario si existe botón ===
   const btnCal = document.getElementById('btnCalendario');
-  if(btnCal){
-    btnCal.addEventListener('click', ()=>{
-      if(!sb) return;
-      const cur = new Date(); // current month; your calendar script will manage page
-      const {from, to} = monthBounds(cur);
-      fetchRange(from, to);
-    });
-  }
+  if(btnCal){ btnCal.addEventListener('click', ()=> fetchMonth(new Date())); }
 
-  // Initial load: fetch today's month and subscribe
+  // === Init ===
   if(sb){
-    const now = new Date();
-    const {from, to} = monthBounds(now);
-    fetchRange(from, to);
+    fetchMonth(new Date());
     subscribeRealtime();
   } else {
-    console.warn('Supabase no configurado. Usa localStorage solamente.');
+    console.warn('Supabase NO configurado — operando solo con localStorage.');
   }
-
-  // Expose helper to manually refresh month
-  window.sbRefreshMonth = function(d){
-    if(!sb) return;
-    const {from, to} = monthBounds(d||new Date());
-    fetchRange(from, to);
-  };
-
-  // Keep track of selected day in calendar (for inserts)
-  // Hook into calendar when user selects a day
-  document.addEventListener('click', (e)=>{
-    const cell = e.target.closest && e.target.closest('.cal-cell');
-    if(cell && cell.querySelector('.date')){
-      const label = cell.querySelector('.date').textContent.trim();
-      const m = parseInt(label,10);
-      const base = new Date();
-      window.__calSelDate = new Date(base.getFullYear(), base.getMonth(), m);
-    }
-  }, true);
-
 })();
 </script>
+
+</body>
+</html>
