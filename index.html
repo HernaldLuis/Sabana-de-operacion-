@@ -675,7 +675,19 @@ td.estado-llegada.marca-vip::before{ content: none; }
   .event-row{ grid-template-columns:110px 60px 80px 1fr auto; }
 }
 
-  </style>
+  
+/* Badge de OK (check verde por 1 hora) */
+td.has-ok{ position:relative; }
+td.has-ok::after{
+  content:"✓";
+  position:absolute; top:2px; right:4px;
+  min-width:16px; height:16px;
+  border-radius:9999px; background:#22c55e; color:#fff;
+  font:900 11px/16px system-ui; text-align:center; pointer-events:none;
+  box-shadow:0 0 0 1px rgba(0,0,0,.08);
+}
+
+</style>
 
 <style id="catalog-container-styles">
   .catalog-wrap{
@@ -773,6 +785,44 @@ td .evt-badge{
 .hist-view{flex:1;overflow:auto;background:#fff}
 .hist-view .snapshot{min-width:900px;padding:12px}
 .hist-close{cursor:pointer;font:800 14px system-ui;color:#0f172a}
+</style>
+
+
+<!-- HISTORIAL: estilos aislados -->
+<style>
+td.has-pendientes{ position:relative; }
+td.has-pendientes::after{
+  content: attr(data-count);
+  position:absolute; top:2px; right:4px;
+  min-width:16px; height:16px; padding:0 4px;
+  border-radius:9999px; background:#ef4444; color:#fff;
+  font:800 11px/16px system-ui; text-align:center; pointer-events:none;
+  box-shadow:0 0 0 1px rgba(0,0,0,.08);
+}
+.historial-box{ margin-top:14px; border-top:1px solid #e5e7eb; padding-top:12px; }
+.historial-head{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.historial-head h3{ margin:0; font:800 14px system-ui; color:#0f172a; }
+.historial-form{ display:grid; gap:8px; grid-template-columns: 1fr 160px 160px; align-items:start; margin-top:8px; }
+.historial-form textarea{ border:1px solid #e5e7eb; border-radius:10px; padding:8px; font:600 13px system-ui; min-height:64px; }
+.historial-form select, .historial-form input[type="datetime-local"]{ border:1px solid #e5e7eb; border-radius:10px; padding:8px; font:600 13px system-ui; }
+.historial-form .files{ border:1px dashed #cbd5e1; border-radius:10px; padding:8px; font:600 12px system-ui; background:#f8fafc; grid-column:1/-1; }
+.historial-form .actions{ grid-column:1/-1; display:flex; gap:8px; justify-content:flex-end; }
+.historial-timeline{ margin-top:10px; display:grid; gap:10px; max-height:260px; overflow:auto; }
+.h-item{ border:1px solid #e5e7eb; border-radius:12px; padding:10px; background:#fff; }
+.h-top{ display:flex; gap:8px; align-items:center; justify-content:space-between; }
+.h-meta{ font:700 12px system-ui; color:#334155; display:flex; gap:10px; flex-wrap:wrap; }
+.h-chip{ padding:2px 8px; border-radius:9999px; font:800 11px system-ui; border:1px solid #e5e7eb; }
+.h-chip.reportado{ background:#fef3c7; border-color:#f59e0b; color:#7c2d12; }
+.h-chip.progreso{ background:#e0f2fe; border-color:#0ea5e9; color:#075985; }
+.h-chip.bloqueado{ background:#fee2e2; border-color:#ef4444; color:#7f1d1d; }
+.h-chip.liberar{ background:#dcfce7; border-color:#22c55e; color:#065f46; }
+.h-chip.cerrado{ background:#f1f5f9; border-color:#cbd5e1; color:#334155; }
+.h-body{ font:600 13px/1.45 system-ui; color:#0f172a; margin-top:6px; white-space:pre-wrap; }
+.h-gallery{ display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+.h-thumb{ width:64px; height:64px; object-fit:cover; border-radius:8px; border:1px solid #e5e7eb; cursor:pointer; }
+.lb-backdrop{ position:fixed; inset:0; background:rgba(2,6,23,.6); display:none; align-items:center; justify-content:center; z-index:1200; }
+.lb-backdrop.show{ display:flex; }
+.lb-img{ max-width:92vw; max-height:92vh; border-radius:12px; box-shadow:0 20px 60px rgba(0,0,0,.35); background:#fff; }
 </style>
 
 </head>
@@ -4017,6 +4067,398 @@ td .evt-badge{
   } else {
     console.warn('Supabase NO configurado — operando solo con localStorage.');
   }
+})();
+</script>
+
+
+<!-- HISTORIAL: lightbox -->
+<div class="lb-backdrop" id="lbBackdrop"><img class="lb-img" id="lbImg" alt=""></div>
+
+
+<!-- HISTORIAL: script aislado y no intrusivo -->
+<script>
+(function(){
+
+  // === Export helpers (CSV / PDF) ===
+  function _toCSV(rows){
+    const esc = v => {
+      if (v == null) return '';
+      const s = typeof v === 'string' ? v : JSON.stringify(v);
+      const needs = /[",\n]/.test(s);
+      return needs ? '"' + s.replace(/"/g,'""') + '"' : s;
+    };
+    return rows.map(r=> r.map(esc).join(',')).join('\n');
+  }
+  function exportHistCSV(room){
+    const list = (window.HSK_HIST[room]||[]).slice().sort((a,b)=> new Date(a.timestamp)-new Date(b.timestamp));
+    const rows = [['Habitación','Fecha','Autor','Estado','Nota','Próxima acción','Fotos']];
+    list.forEach(it=>{
+      const fotos = (it.fotos||[]).map(f=>f.src||f.thumb||'').join(' | ');
+      rows.push([room, it.timestamp||'', it.autor||'', it.estado||'', it.nota||'', it.proxima_accion||'', fotos]);
+    });
+    const blob = new Blob([_toCSV(rows)], {type:'text/csv;charset=utf-8;'});
+    const a = document.createElement('a');
+    const now = new Date();
+    const y = now.getFullYear(), m = String(now.getMonth()+1).padStart(2,'0'), d = String(now.getDate()).padStart(2,'0');
+    a.href = URL.createObjectURL(blob);
+    a.download = `historial_${room}_${y}${m}${d}.csv`;
+    document.body.appendChild(a); a.click(); a.remove();
+  }
+  function exportHistPDF(room){
+    const list = (window.HSK_HIST[room]||[]).slice().sort((a,b)=> new Date(a.timestamp)-new Date(b.timestamp));
+    const w = window.open('', '_blank');
+    const css = `
+      <style>
+        body{font:12px/1.4 system-ui; color:#0f172a; padding:16px;}
+        h1{font:800 18px system-ui; margin:0 0 8px}
+        table{width:100%; border-collapse:collapse; font-size:12px}
+        th, td{border:1px solid #cbd5e1; padding:6px; vertical-align:top}
+        th{background:#f1f5f9; text-align:left}
+        .small{color:#475569}
+      </style>`;
+    const head = `<h1>Historial — Habitación ${room}</h1><div class="small">${new Date().toLocaleString()}</div>`;
+    const rows = list.map(it=>`
+      <tr>
+        <td>${it.timestamp||''}</td>
+        <td>${it.autor||''}</td>
+        <td>${it.estado||''}</td>
+        <td>${(it.nota||'').replace(/</g,'&lt;')}</td>
+        <td>${it.proxima_accion||''}</td>
+        <td>${(it.fotos||[]).map(f=>`<div>${(f.src||f.thumb||'')}</div>`).join('')}</td>
+      </tr>`).join('');
+    const html = `<!doctype html><html><head><meta charset="utf-8">${css}</head><body>${head}
+      <table>
+        <thead><tr><th>Fecha</th><th>Autor</th><th>Estado</th><th>Nota</th><th>Próx. acción</th><th>Fotos</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    
+<!-- FIREBASE SDK (compat) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+
+
+<!-- HISTORIAL: Integración Firebase (no intrusiva; usa tu UI existente) -->
+<script>
+(function(){
+  // ===== Configura aquí =====
+  const firebaseConfig = {
+    apiKey: "",
+    authDomain: "",
+    projectId: "",
+    storageBucket: "",
+    appId: ""
+  };
+  const HOTEL_ID = "default"; // <- si manejas varios hoteles/raíces, cámbialo por el ID correspondiente
+
+  // Evita reinicializar si ya existe
+  if (!firebase.apps.length) { try { firebase.initializeApp(firebaseConfig); } catch(e) { console.warn(e); } }
+  const db = firebase.firestore();
+  const storage = firebase.storage();
+
+  // Rutas estilo "raíces → árbol"
+  function colHist(room){
+    return db.collection("hoteles").doc(HOTEL_ID).collection("habitaciones").doc(String(room)).collection("historial");
+  }
+  function storagePath(room, file, idx){
+    const clean = (file.name || ('foto_'+idx)).replace(/\s+/g,'_');
+    return `${HOTEL_ID}/${room}/${Date.now()}_${idx}_${clean}`;
+  }
+
+  // ===== Operaciones =====
+  async function fbListEntries(room){
+    const snap = await colHist(room).orderBy("timestamp","desc").get();
+    return snap.docs.map(d=> ({ id:d.id, ...d.data() }));
+  }
+  async function fbInsertEntry(room, entry){
+    const doc = await colHist(room).add(entry);
+    const d = await doc.get();
+    return { id: d.id, ...d.data() };
+  }
+  async function fbUpdateAckHSK(room){
+    const snap = await colHist(room).orderBy("timestamp","desc").limit(1).get();
+    if(snap.empty) return;
+    const doc = snap.docs[0];
+    const acks = Object.assign({}, doc.data().acks||{}, { HSK:true });
+    await doc.ref.update({ acks });
+  }
+  async function fbUploadFiles(room, files){
+    const out = [];
+    for(let i=0;i<files.length;i++){
+      const f = files[i];
+      const ref = storage.ref().child(storagePath(room, f, i));
+      await ref.put(f, { contentType: f.type });
+      const url = await ref.getDownloadURL();
+      out.push({ src:url, thumb:url });
+    }
+    return out;
+  }
+
+  // ===== Enlazar con tu UI existente =====
+  function getRoomFromTitle(){
+    var h = document.getElementById('modalTitle');
+    if(!h) return null;
+    var m = h.textContent.match(/(\d{3,4})/);
+    return m ? m[1] : null;
+  }
+
+  async function mountFirebaseHandlers(room){
+    // Traer datos y renderizar usando tu renderHistorial(room) con HSK_HIST
+    if(!window.renderHistorial){ return; }
+    const list = await fbListEntries(room);
+    window.HSK_HIST = window.HSK_HIST || {};
+    window.HSK_HIST[room] = list; // usa tu mismo formato
+    window.renderHistorial(room);
+
+    // Enlazar formulario para que guarde en Firebase
+    const form = document.getElementById('historialForm');
+    const nota = document.getElementById('hNota');
+    const estado = document.getElementById('hEstado');
+    const prox = document.getElementById('hProxima');
+    const fotosInput = document.getElementById('hFotos');
+    const ackBtn = document.getElementById('hAck');
+
+    let fotosTmp = [];
+    if(fotosInput){
+      fotosInput.onchange = async function(){
+        if(!this.files || !this.files.length){ fotosTmp=[]; return; }
+        fotosTmp = await fbUploadFiles(room, this.files);
+        const zone = document.getElementById('hPreviews');
+        if(zone){ zone.innerHTML=''; fotosTmp.forEach(f=>{ const img=document.createElement('img'); img.className='h-thumb'; img.src=f.thumb||f.src; zone.appendChild(img); }); }
+      };
+    }
+
+    if(form){
+      form.onsubmit = async function(e){
+        e.preventDefault();
+        const entry = {
+          habitacion: String(room),
+          timestamp: new Date().toISOString(),
+          autor: 'HSK',
+          estado: (estado && estado.value) || 'reportado',
+          nota: (nota && nota.value || '').trim(),
+          proxima_accion: (prox && prox.value) || '',
+          fotos: fotosTmp,
+          acks: { HSK:false, MNT:false }
+        };
+        await fbInsertEntry(room, entry);
+        nota && (nota.value=''); prox && (prox.value=''); fotosInput && (fotosInput.value=''); const pv=document.getElementById('hPreviews'); if(pv) pv.innerHTML='';
+        fotosTmp = [];
+        const list2 = await fbListEntries(room);
+        window.HSK_HIST[room] = list2;
+        window.renderHistorial(room);
+      };
+    }
+
+    if(ackBtn){
+      ackBtn.onclick = async function(){
+        await fbUpdateAckHSK(room);
+        const list3 = await fbListEntries(room);
+        window.HSK_HIST[room] = list3;
+        window.renderHistorial(room);
+      };
+    }
+  }
+
+  // Hook suave al abrir el modal
+  if(typeof window.abrirModalHabitacion === 'function' && !window.__FB_WRAP){
+    window.__FB_WRAP = true;
+    var _orig = window.abrirModalHabitacion;
+    window.abrirModalHabitacion = function(num){
+      var ret = _orig.apply(this, arguments);
+      setTimeout(function(){
+        var room = getRoomFromTitle() || num;
+        if(room){ mountFirebaseHandlers(String(room)); }
+      }, 80);
+      return ret;
+    };
+  } else {
+    // Fallback: si no podemos envolver, observa el modal
+    var modal = document.getElementById('modalHabitacion');
+    var content = document.getElementById('modalContent') || (modal && modal.querySelector('.modal-box .content'));
+    if(content){
+      new MutationObserver(function(){
+        if(getComputedStyle(modal).display !== 'none'){
+          var room = getRoomFromTitle();
+          if(room){ mountFirebaseHandlers(String(room)); }
+        }
+      }).observe(content, { childList:true, subtree:true, attributes:true, attributeFilter:['style','class'] });
+    }
+  }
+})();
+</script>
+
+</body></html>`;
+    w.document.open(); w.document.write(html); w.document.close(); w.focus(); w.print();
+  }
+
+
+  // Inyecta botones Export dentro del head al montar la sección
+  function ensureExportButtons(room){
+    var head = document.querySelector('#historialBox .historial-head');
+    if(!head || document.getElementById('btnExportCSV')) return;
+    var wrap = document.createElement('div');
+    var b1 = document.createElement('button'); b1.type='button'; b1.className='btn'; b1.id='btnExportCSV'; b1.textContent='Exportar Excel';
+    var b2 = document.createElement('button'); b2.type='button'; b2.className='btn'; b2.id='btnExportPDF'; b2.textContent='Exportar PDF';
+    wrap.appendChild(b1); wrap.appendChild(b2);
+    head.appendChild(wrap);
+    b1.addEventListener('click', function(){ exportHistCSV(room); });
+    b2.addEventListener('click', function(){ exportHistPDF(room); });
+  }
+  // Estado en memoria (no persiste aún)
+  window.HSK_HIST = window.HSK_HIST || {}; // { '3101': [ ... ] }
+
+  function fmt(dt){ try{ return new Date(dt).toLocaleString(); }catch(e){ return dt||'' } }
+
+  function handlePreviewFiles(files){
+    const zone = document.getElementById('hPreviews');
+    if(!zone) return [];
+    zone.innerHTML = '';
+    const out = [];
+    [...files].forEach(f=>{
+      const url = URL.createObjectURL(f);
+      out.push({ src:url, thumb:url });
+      const img = document.createElement('img');
+      img.className = 'h-thumb';
+      img.src = url;
+      zone.appendChild(img);
+    });
+    return out;
+  }
+
+  function renderHistorial(room){
+    ensureExportButtons(room);
+    const wrap = document.getElementById('historialTimeline');
+    if(!wrap) return;
+    const list = (window.HSK_HIST[room]||[]).slice().sort((a,b)=> new Date(b.timestamp) - new Date(a.timestamp));
+    wrap.innerHTML = '';
+    let abiertos = 0;
+
+    list.forEach(it=>{
+      const chip = it.estado==='reportado'?'Reportado': it.estado==='progreso'?'En progreso': it.estado==='bloqueado'?'Bloqueado': it.estado==='liberar'?'Listo para liberar':'Cerrado';
+      if(it.estado!=='cerrado') abiertos++;
+      const fotos = (it.fotos||[]).map(f=>'<img class="h-thumb" src="'+(f.thumb||f.src)+'" data-full="'+(f.src)+'" alt="">').join('');
+      wrap.insertAdjacentHTML('beforeend',
+        '<div class="h-item">'+
+          '<div class="h-top">'+
+            '<div class="h-meta"><strong>'+(it.autor||'—')+'</strong><span>'+fmt(it.timestamp)+'</span>'+(it.proxima_accion?'<span>Próx: '+fmt(it.proxima_accion)+'</span>':'')+'</div>'+
+            '<span class="h-chip '+it.estado+'">'+chip+'</span>'+
+          '</div>'+
+          '<div class="h-body">'+(it.nota||'')+'</div>'+
+          (fotos?'<div class="h-gallery">'+fotos+'</div>':'')+
+        '</div>'
+      );
+    });
+
+    // Lightbox
+    wrap.querySelectorAll('.h-thumb').forEach(function(img){
+      img.addEventListener('click', function(){
+        var lb=document.getElementById('lbBackdrop'); var lbImg=document.getElementById('lbImg');
+        lbImg.src = this.getAttribute('data-full') || this.src; lb.classList.add('show');
+      });
+    });
+
+    try{
+      var title = document.getElementById('modalTitle');
+      var roomNum = title ? (title.textContent.match(/(\d{3,4})/)||[])[1] : room;
+      if(roomNum){
+        var tds = document.querySelectorAll('.table-scroller table.excel td');
+        var last = list[0] || null;
+        var now = Date.now();
+        tds.forEach(function(td){
+          if(td.textContent.trim() === String(roomNum)){
+            td.classList.remove('has-pendientes','has-ok');
+            td.removeAttribute('data-count');
+
+            if(last && last.acks && last.acks.HSK){
+              return; // HSK ok: sin badge
+            }
+            if(last && last.estado==='cerrado'){
+              var ts = new Date(last.timestamp).getTime();
+              if(!isNaN(ts) && (now - ts) < 3600000){
+                td.classList.add('has-ok'); // check verde 1h
+                return;
+              } else {
+                return; // pasado 1h, nada
+              }
+            }
+            if(abiertos>0){
+              td.classList.add('has-pendientes');
+              td.setAttribute('data-count', abiertos);
+            }
+          }
+        });
+      }
+    }catch(e){}
+    }
+
+  // Inyección no intrusiva: observar cuando se abre el modal y agregar bloque si falta
+  var modal = document.getElementById('modalHabitacion');
+  var content = document.getElementById('modalContent');
+  if(modal && content){
+    var obs = new MutationObserver(function(){
+      if(modal.style.display !== 'none' && !document.getElementById('historialBox')){
+        content.insertAdjacentHTML('beforeend', 
+          '<section class="historial-box" id="historialBox">'+
+            '<div class="historial-head"><h3>Historial</h3><small style="color:#64748b;font:600 12px system-ui">Sube notas y fotos; orden cronológico automático.</small></div>'+
+            '<form class="historial-form" id="historialForm">'+
+              '<textarea id="hNota" placeholder="Describe el hallazgo o seguimiento (ej. plafón dañado)"></textarea>'+
+              '<select id="hEstado"><option value="reportado">Reportado</option><option value="progreso">En progreso</option><option value="bloqueado">Bloqueado</option><option value="liberar">Listo para liberar</option><option value="cerrado">Cerrado</option></select>'+
+              '<input id="hProxima" type="datetime-local" />'+
+              '<div class="files"><label><input id="hFotos" type="file" accept="image/*" multiple> Agregar foto(s)</label><div id="hPreviews" class="h-gallery"></div></div>'+
+              '<div class="actions"><button type="button" class="btn" id="hAck">OK visto (HSK)</button><button type="submit" class="btn primary">Agregar al historial</button></div>'+
+            '</form>'+
+            '<div class="historial-timeline" id="historialTimeline"></div>'+
+          '</section>'
+        );
+
+        var fotosInput = document.getElementById('hFotos');
+        var form = document.getElementById('historialForm');
+        var nota = document.getElementById('hNota');
+        var estado = document.getElementById('hEstado');
+        var prox = document.getElementById('hProxima');
+        var ack = document.getElementById('hAck');
+
+        var roomNum = (document.getElementById('modalTitle').textContent.match(/(\d{3,4})/)||[])[1];
+
+        var fotosTmp = [];
+        fotosInput && (fotosInput.onchange = function(){ fotosTmp = handlePreviewFiles(fotosInput.files); });
+
+        form && (form.onsubmit = function(e){
+          e.preventDefault();
+          var entry = {
+            habitacion: String(roomNum),
+            timestamp: new Date().toISOString(),
+            autor: 'HSK',
+            estado: (estado && estado.value) || 'reportado',
+            nota: (nota && nota.value || '').trim(),
+            proxima_accion: (prox && prox.value) || '',
+            fotos: fotosTmp,
+            acks: { HSK:false, MNT:false }
+          };
+          window.HSK_HIST[roomNum] = window.HSK_HIST[roomNum] || [];
+          window.HSK_HIST[roomNum].push(entry);
+          nota && (nota.value=''); prox && (prox.value='');
+          fotosInput && (fotosInput.value=''); var pv=document.getElementById('hPreviews'); if(pv) pv.innerHTML='';
+          fotosTmp = [];
+          renderHistorial(roomNum);
+        });
+
+        ack && (ack.onclick = function(){
+          var arr = window.HSK_HIST[roomNum] || [];
+          if(arr.length){ arr[arr.length-1].acks = arr[arr.length-1].acks || {}; arr[arr.length-1].acks.HSK = true; }
+          renderHistorial(roomNum); // quita contador inmediatamente
+        });
+
+        renderHistorial(roomNum);
+      }
+    });
+    obs.observe(content, { childList:true, subtree:true, attributes:true, attributeFilter:['style','class'] });
+  }
+
+  // Cerrar lightbox al clic
+  var lb = document.getElementById('lbBackdrop');
+  lb && lb.addEventListener('click', function(){ this.classList.remove('show'); });
 })();
 </script>
 
