@@ -993,6 +993,10 @@ td.has-pendientes::after{
 </table>
     </div></div>
   </div>
+  
+  <div style="text-align:right; font:500 10px system-ui; color:#cbd5e1; margin-top:4px;">
+  © Desarrollado por Luis Hernaldo - Inspirado en JULU "Los detalles hacen cosas grandes" 2025
+</div>
 
   <!-- Modal de Habitación (informativo) -->
   <div class="modal-backdrop" id="modalHabitacion" hidden>
@@ -4131,164 +4135,7 @@ td.has-pendientes::after{
         <thead><tr><th>Fecha</th><th>Autor</th><th>Estado</th><th>Nota</th><th>Próx. acción</th><th>Fotos</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
-    
-<!-- FIREBASE SDK (compat) -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
-
-
-<!-- HISTORIAL: Integración Firebase (no intrusiva; usa tu UI existente) -->
-<script>
-(function(){
-  // ===== Configura aquí =====
-  const firebaseConfig = {
-    apiKey: "",
-    authDomain: "",
-    projectId: "",
-    storageBucket: "",
-    appId: ""
-  };
-  const HOTEL_ID = "default"; // <- si manejas varios hoteles/raíces, cámbialo por el ID correspondiente
-
-  // Evita reinicializar si ya existe
-  if (!firebase.apps.length) { try { firebase.initializeApp(firebaseConfig); } catch(e) { console.warn(e); } }
-  const db = firebase.firestore();
-  const storage = firebase.storage();
-
-  // Rutas estilo "raíces → árbol"
-  function colHist(room){
-    return db.collection("hoteles").doc(HOTEL_ID).collection("habitaciones").doc(String(room)).collection("historial");
-  }
-  function storagePath(room, file, idx){
-    const clean = (file.name || ('foto_'+idx)).replace(/\s+/g,'_');
-    return `${HOTEL_ID}/${room}/${Date.now()}_${idx}_${clean}`;
-  }
-
-  // ===== Operaciones =====
-  async function fbListEntries(room){
-    const snap = await colHist(room).orderBy("timestamp","desc").get();
-    return snap.docs.map(d=> ({ id:d.id, ...d.data() }));
-  }
-  async function fbInsertEntry(room, entry){
-    const doc = await colHist(room).add(entry);
-    const d = await doc.get();
-    return { id: d.id, ...d.data() };
-  }
-  async function fbUpdateAckHSK(room){
-    const snap = await colHist(room).orderBy("timestamp","desc").limit(1).get();
-    if(snap.empty) return;
-    const doc = snap.docs[0];
-    const acks = Object.assign({}, doc.data().acks||{}, { HSK:true });
-    await doc.ref.update({ acks });
-  }
-  async function fbUploadFiles(room, files){
-    const out = [];
-    for(let i=0;i<files.length;i++){
-      const f = files[i];
-      const ref = storage.ref().child(storagePath(room, f, i));
-      await ref.put(f, { contentType: f.type });
-      const url = await ref.getDownloadURL();
-      out.push({ src:url, thumb:url });
-    }
-    return out;
-  }
-
-  // ===== Enlazar con tu UI existente =====
-  function getRoomFromTitle(){
-    var h = document.getElementById('modalTitle');
-    if(!h) return null;
-    var m = h.textContent.match(/(\d{3,4})/);
-    return m ? m[1] : null;
-  }
-
-  async function mountFirebaseHandlers(room){
-    // Traer datos y renderizar usando tu renderHistorial(room) con HSK_HIST
-    if(!window.renderHistorial){ return; }
-    const list = await fbListEntries(room);
-    window.HSK_HIST = window.HSK_HIST || {};
-    window.HSK_HIST[room] = list; // usa tu mismo formato
-    window.renderHistorial(room);
-
-    // Enlazar formulario para que guarde en Firebase
-    const form = document.getElementById('historialForm');
-    const nota = document.getElementById('hNota');
-    const estado = document.getElementById('hEstado');
-    const prox = document.getElementById('hProxima');
-    const fotosInput = document.getElementById('hFotos');
-    const ackBtn = document.getElementById('hAck');
-
-    let fotosTmp = [];
-    if(fotosInput){
-      fotosInput.onchange = async function(){
-        if(!this.files || !this.files.length){ fotosTmp=[]; return; }
-        fotosTmp = await fbUploadFiles(room, this.files);
-        const zone = document.getElementById('hPreviews');
-        if(zone){ zone.innerHTML=''; fotosTmp.forEach(f=>{ const img=document.createElement('img'); img.className='h-thumb'; img.src=f.thumb||f.src; zone.appendChild(img); }); }
-      };
-    }
-
-    if(form){
-      form.onsubmit = async function(e){
-        e.preventDefault();
-        const entry = {
-          habitacion: String(room),
-          timestamp: new Date().toISOString(),
-          autor: 'HSK',
-          estado: (estado && estado.value) || 'reportado',
-          nota: (nota && nota.value || '').trim(),
-          proxima_accion: (prox && prox.value) || '',
-          fotos: fotosTmp,
-          acks: { HSK:false, MNT:false }
-        };
-        await fbInsertEntry(room, entry);
-        nota && (nota.value=''); prox && (prox.value=''); fotosInput && (fotosInput.value=''); const pv=document.getElementById('hPreviews'); if(pv) pv.innerHTML='';
-        fotosTmp = [];
-        const list2 = await fbListEntries(room);
-        window.HSK_HIST[room] = list2;
-        window.renderHistorial(room);
-      };
-    }
-
-    if(ackBtn){
-      ackBtn.onclick = async function(){
-        await fbUpdateAckHSK(room);
-        const list3 = await fbListEntries(room);
-        window.HSK_HIST[room] = list3;
-        window.renderHistorial(room);
-      };
-    }
-  }
-
-  // Hook suave al abrir el modal
-  if(typeof window.abrirModalHabitacion === 'function' && !window.__FB_WRAP){
-    window.__FB_WRAP = true;
-    var _orig = window.abrirModalHabitacion;
-    window.abrirModalHabitacion = function(num){
-      var ret = _orig.apply(this, arguments);
-      setTimeout(function(){
-        var room = getRoomFromTitle() || num;
-        if(room){ mountFirebaseHandlers(String(room)); }
-      }, 80);
-      return ret;
-    };
-  } else {
-    // Fallback: si no podemos envolver, observa el modal
-    var modal = document.getElementById('modalHabitacion');
-    var content = document.getElementById('modalContent') || (modal && modal.querySelector('.modal-box .content'));
-    if(content){
-      new MutationObserver(function(){
-        if(getComputedStyle(modal).display !== 'none'){
-          var room = getRoomFromTitle();
-          if(room){ mountFirebaseHandlers(String(room)); }
-        }
-      }).observe(content, { childList:true, subtree:true, attributes:true, attributeFilter:['style','class'] });
-    }
-  }
-})();
-</script>
-
-</body></html>`;
+    </body></html>`;
     w.document.open(); w.document.write(html); w.document.close(); w.focus(); w.print();
   }
 
